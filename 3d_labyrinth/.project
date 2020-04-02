@@ -28,7 +28,7 @@
 		<link>
 			<name>e-puck2_main-processor</name>
 			<type>2</type>
-			<locationURI>copy_PARENT/lib/e-puck2_main-processor</locationURI>
+			<location>C:/Users/Maure Romain/Desktop/Etudes/Microtechnique VI/Microinformatique/lib/e-puck2_main-processor</location>
 		</link>
 	</linkedResources>
 	<variableList>
