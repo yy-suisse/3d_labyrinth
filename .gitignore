@@ -1,3 +1,14 @@
-#
+# General extensions
 
 *.elf
+*.o.d
+*.bin
+*.hex
+*.dmp
+*.list
+*.
+
+
+# Specific paths
+
+**/build/

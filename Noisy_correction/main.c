@@ -17,7 +17,7 @@
 #include <arm_math.h>
 
 //uncomment to send the FFTs results from the real microphones
-//#define SEND_FROM_MIC
+#define SEND_FROM_MIC
 
 //uncomment to use double buffering to send the FFT to the computer
 #define DOUBLE_BUFFERING
@@ -111,6 +111,8 @@ int main(void)
             GPTD12.tim->CNT = 0;
 
             doFFT_optimized(FFT_SIZE, bufferCmplxInput);
+
+            //doIFFT_optimized(FFT_SIZE, bufferCmplxInput);
 
             time_fft = GPTD12.tim->CNT;
             chSysUnlock();
