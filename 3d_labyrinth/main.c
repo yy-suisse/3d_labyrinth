@@ -254,7 +254,7 @@ static THD_FUNCTION(selector_thd, arg)
 	            switch(rgb_state) {
 					case 0: // Red.
 						set_rgb_led(0, 10, 0, 0);
-						set_rgb_led(1, 10, 0, 0);
+						//set_rgb_led(1, 10, 0, 0);
 						set_rgb_led(2, 10, 0, 0);
 						set_rgb_led(3, 10, 0, 0);
 						break;
