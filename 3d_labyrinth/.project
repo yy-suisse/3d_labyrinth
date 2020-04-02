@@ -34,7 +34,7 @@
 	<variableList>
 		<variable>
 			<name>copy_PARENT</name>
-			<value>file:/C:/Users/Maure%20Romain/Desktop/Etudes/Microtechnique%20VI/Microinformatique</value>
+			<value>$%7BPARENT-2-ECLIPSE_HOME%7D</value>
 		</variable>
 	</variableList>
 </projectDescription>
