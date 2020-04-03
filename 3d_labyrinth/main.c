@@ -41,6 +41,10 @@
 #include "communication.h"
 #include "uc_usage.h"
 
+
+#define VITESSE_BASE 				150
+
+
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
 messagebus_t bus;
@@ -71,19 +75,39 @@ static void serial_start(void)
 }
 
 
-void show_gravity(imu_msg_t *imu_values){
+void show_gravity(imu_msg_t *imu_values)
+{
 
     //we create variables for the led in order to turn them off at each loop and to
     //select which one to turn on
     uint8_t led1 = 0, led3 = 0, led5 = 0, led7 = 0;
+
     //threshold value to not use the leds when the robot is too horizontal
-    float threshold = 0.2;
+    float threshold = 0.4;
+
     //create a pointer to the array for shorter name
     float *accel = imu_values->acceleration;
-    //variable to measure the time some functions take
-    //volatile to not be optimized out by the compiler if not used
-   // volatile uint16_t time = 0;
 
+    // Filtre par moyenne pour éviter les accoups lors des changements de vitesse
+    static float tab_average[8] = {0};			// 8 en DEFINE
+    static uint8_t boucle = 0;
+    float acceleration_average = 0;			//////////////////////////// FILTRE MOYENNE PEUT ETRE ESSAYER AVEC DSP
+
+
+
+    tab_average[boucle] = fabs(accel[Y_AXIS]);
+    boucle++;
+
+    if (boucle == 8)
+    {
+    	boucle = 0;
+    }
+
+    for(int i = 0; i < 8 ; i++)
+    {
+    	acceleration_average += tab_average[i];
+    }
+    acceleration_average = acceleration_average / 8 ; //// SHIFT PLUTOT ///////////////////////////////
 
     /*
     *   example 1 with trigonometry.
@@ -107,12 +131,10 @@ void show_gravity(imu_msg_t *imu_values){
     if(fabs(accel[X_AXIS]) > threshold || fabs(accel[Y_AXIS]) > threshold){
 
         chSysLock();
-        //reset the timer counter
-       // GPTD11.tim->CNT = 0;
+
         //clock wise angle in rad with 0 being the back of the e-puck2 (Y axis of the IMU)
         float angle = atan2(accel[X_AXIS], accel[Y_AXIS]);
-        //by reading time with the debugger, we can know the computational time of atan2 function
-        //time = GPTD11.tim->CNT;
+
         chSysUnlock();
 
         //rotates the angle by 45 degrees (simpler to compare with PI and PI/2 than with 5*PI/4)
@@ -124,23 +146,41 @@ void show_gravity(imu_msg_t *imu_values){
             angle = -2 * M_PI + angle;
         }
 
-        if(angle >= 0 && angle < M_PI/2){
+
+        if(angle >= 0 && angle < M_PI/2)
+        {
             led5 = 1;
-            left_motor_set_speed(-150);
-            right_motor_set_speed(-150);
-        }else if(angle >= M_PI/2 && angle < M_PI){
-            led7 = 1;
-            left_motor_set_speed(-150);
-            right_motor_set_speed(150);
-        }else if(angle >= -M_PI && angle < -M_PI/2){
-            led1 = 1;
-            left_motor_set_speed(150);
-            right_motor_set_speed(150);
-        }else if(angle >= -M_PI/2 && angle < 0){
-            led3 = 1;
-            left_motor_set_speed(150);
-            right_motor_set_speed(-150);
+            left_motor_set_speed(-VITESSE_BASE*acceleration_average);
+            right_motor_set_speed(-VITESSE_BASE*acceleration_average);
         }
+
+        else if(angle >= M_PI/2 && angle < M_PI)
+        {
+            led7 = 1;
+            left_motor_set_speed(-VITESSE_BASE);
+            right_motor_set_speed(VITESSE_BASE);
+        }
+
+        else if(angle >= -M_PI && angle < -M_PI/2)
+        {
+            led1 = 1;
+            left_motor_set_speed(VITESSE_BASE*acceleration_average);
+            right_motor_set_speed(VITESSE_BASE*acceleration_average);
+        }
+
+        else if(angle >= -M_PI/2 && angle < 0)
+        {
+            led3 = 1;
+            left_motor_set_speed(VITESSE_BASE);
+            right_motor_set_speed(-VITESSE_BASE);
+        }
+    }
+
+    // cas ou on est en dessous du threshold -> pas de mouvements
+    else
+    {
+    	left_motor_set_speed(0);
+    	right_motor_set_speed(0);
     }
 
     /*
@@ -187,8 +227,7 @@ void show_gravity(imu_msg_t *imu_values){
      time = GPTD11.tim->CNT;
      chSysUnlock();*/
 
-    //to see the duration on the console
-   // chprintf((BaseSequentialStream *)&SD3, "time = %dus\n",time);
+
     //we invert the values because a led is turned on if the signal is low
     palWritePad(GPIOD, GPIOD_LED1, led1 ? 0 : 1);
     palWritePad(GPIOD, GPIOD_LED3, led3 ? 0 : 1);
@@ -206,13 +245,15 @@ static THD_FUNCTION(selector_thd, arg)
     messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
     imu_msg_t imu_values;
 
+
     calibrate_acc();
-    calibrate_gyro();
+    calibrate_gyro();  	// VOIR SI NECESSAIRE //////////////////////////////////////////
 
     while(1)
     {
     	//wait for new measures to be published
     	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+
 
 		// Reflect the orientation on the LEDs around the robot.
 		//e_display_angle();
