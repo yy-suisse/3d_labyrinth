@@ -41,6 +41,9 @@
 #include "communication.h"
 #include "uc_usage.h"
 
+static bool controle_front = 0;
+static bool controle_back = 0;
+
 
 #define VITESSE_BASE 				150
 
@@ -150,9 +153,20 @@ void show_gravity(imu_msg_t *imu_values)
 
         if(angle >= 0 && angle < M_PI/2)
         {
-            led5 = 1;
-            left_motor_set_speed(-VITESSE_BASE*acceleration_average);
-            right_motor_set_speed(-VITESSE_BASE*acceleration_average);
+        	led5 = 1;
+
+        	if (!controle_back)
+        	{
+        		left_motor_set_speed(-VITESSE_BASE*acceleration_average);
+        		right_motor_set_speed(-VITESSE_BASE*acceleration_average);
+        	}
+
+        	else if (controle_back)
+        	{
+        		left_motor_set_speed(0);
+        		right_motor_set_speed(0);
+        	}
+
         }
 
         else if(angle >= M_PI/2 && angle < M_PI)
@@ -165,8 +179,19 @@ void show_gravity(imu_msg_t *imu_values)
         else if(angle >= -M_PI && angle < -M_PI/2)
         {
             led1 = 1;
-            left_motor_set_speed(VITESSE_BASE*acceleration_average);
-            right_motor_set_speed(VITESSE_BASE*acceleration_average);
+
+            if(!controle_front)
+            {
+            	left_motor_set_speed(VITESSE_BASE*acceleration_average);
+            	right_motor_set_speed(VITESSE_BASE*acceleration_average);
+            }
+
+            else if (controle_front)
+            {
+            	left_motor_set_speed(0);
+            	right_motor_set_speed(0);
+            }
+
         }
 
         else if(angle >= -M_PI/2 && angle < 0)
@@ -235,6 +260,9 @@ void show_gravity(imu_msg_t *imu_values)
     palWritePad(GPIOD, GPIOD_LED5, led5 ? 0 : 1);
     palWritePad(GPIOD, GPIOD_LED7, led7 ? 0 : 1);
 
+    controle_front = 0;
+    controle_back = 0;
+
 }
 
 static THD_FUNCTION(prox_analyse_thd, arg)
@@ -242,16 +270,15 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     (void) arg;
     chRegSetThreadName(__FUNCTION__);
 
-    int16_t leftSpeed = 0, rightSpeed = 0;
     systime_t time;
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
-    bool statue =0;
 
 
     while(1) {
     	time = chVTGetSystemTime();
+
 
 
     			messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
@@ -276,16 +303,22 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 */
 
-	        	  clear_leds();
-				if (abs(prox_values.delta[0])>200)
+    			set_rgb_led(0, 0, 0, 0);
+    			set_rgb_led(1, 0, 0, 0);
+    			set_rgb_led(2, 0, 0, 0);
+    			set_rgb_led(3, 0, 0, 0);
+
+
+
+				if (abs(prox_values.delta[0])>200) /// MAGIC NUMBER
 					{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(3, 10,10 , 0);
-					playMelody(6, ML_SIMPLE_PLAY, NULL);
+					//playMelody(6, ML_SIMPLE_PLAY, NULL);
 
 					// chprintf((BaseSequentialStream *)&SDU1, "front value is : %d, turning around" ,abs(prox_values.delta[0]));
 					 //chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-					 statue = 1;
+					 controle_front = 1;
 					}
 
 
@@ -295,7 +328,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 					{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(1, 10,10 , 0);
-					playMelody(6, ML_SIMPLE_PLAY, NULL);
+					//playMelody(6, ML_SIMPLE_PLAY, NULL);
 					//chprintf((BaseSequentialStream *)&SDU1, "right value is : %4d, ahead" ,abs(prox_values.delta[2]));
 					 //chprintf((BaseSequentialStream *)&SDU1, "\r\n");
 
@@ -307,10 +340,10 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 					{
 				set_rgb_led(1, 10,10 , 0);
 				set_rgb_led(2, 10,10 , 0);
-				playMelody(6, ML_SIMPLE_PLAY, NULL);
+				//playMelody(6, ML_SIMPLE_PLAY, NULL);
 				//chprintf((BaseSequentialStream *)&SDU1, "back value is : %4d, turing around" ,abs(prox_values.delta[3]));
 				//chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				statue =1 ;
+				controle_back = 1 ;
 
 					}
 
@@ -320,9 +353,9 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 					{
 				set_rgb_led(2, 10,10 , 0);
 				set_rgb_led(3, 10,10 , 0);
-				playMelody(6, ML_SIMPLE_PLAY, NULL);
-				int i=0;
-				i=abs(prox_values.delta[5]);
+				//playMelody(6, ML_SIMPLE_PLAY, NULL);
+				//int i=0;
+				//i=abs(prox_values.delta[5]);
 				//chprintf((BaseSequentialStream *)&SDU1, "left value is : %d, ahead" ,i);
 				//chprintf((BaseSequentialStream *)&SDU1, "\r\n");
 
@@ -330,15 +363,15 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 				//chprintf((BaseSequentialStream *)&SDU1, "statue value is : %d", statue);
 				//chprintf((BaseSequentialStream *)&SDU1, "\r\n");
 
-				if(statue ==1)
+				/*if(statue ==1)
 				{
 					left_motor_set_speed(0);
 					right_motor_set_speed(0);
 
-				}
+				}*/
 
 
-				statue = 0;
+
 
 				//if (prox_values.delta[6]>200)
 			//	if (prox_values.delta[7]>200)
@@ -451,12 +484,11 @@ int main(void)
     aseba_vm_init();
     aseba_can_start(&vmState);
     calibrate_ir();
-    chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
+    chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO+1, controle_thd, NULL);
     chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
 
     /* Infinite loop. */
     while (1) {
-    	clear_leds();
         chThdSleepMilliseconds(1000);
     }
 }
