@@ -53,7 +53,7 @@ CONDVAR_DECL(bus_condvar);
 
 parameter_namespace_t parameter_root, aseba_ns;
 
-static THD_WORKING_AREA(selector_thd_wa, 2048);
+static THD_WORKING_AREA(controle_thd_wa, 2048);
 
 static bool load_config(void)
 {
@@ -236,7 +236,7 @@ void show_gravity(imu_msg_t *imu_values)
 
 }
 
-static THD_FUNCTION(selector_thd, arg)
+static THD_FUNCTION(controle_thd, arg)
 {
     (void) arg;
     chRegSetThreadName(__FUNCTION__);
@@ -309,7 +309,7 @@ int main(void)
     aseba_vm_init();
     aseba_can_start(&vmState);
 
-    chThdCreateStatic(selector_thd_wa, sizeof(selector_thd_wa), NORMALPRIO, selector_thd, NULL);
+    chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
 
     /* Infinite loop. */
     while (1) {
