@@ -97,6 +97,8 @@ void show_gravity(imu_msg_t *imu_values)
     static uint8_t boucle = 0;
     float acceleration_average = 0;			//////////////////////////// FILTRE MOYENNE PEUT ETRE ESSAYER AVEC DSP
 
+    static bool already_played = 0;
+
 
 
     tab_average[boucle] = fabs(accel[Y_AXIS]);
@@ -159,12 +161,19 @@ void show_gravity(imu_msg_t *imu_values)
         	{
         		left_motor_set_speed(-VITESSE_BASE*acceleration_average);
         		right_motor_set_speed(-VITESSE_BASE*acceleration_average);
+        		already_played = 0;
         	}
 
         	else if (controle_back)
         	{
         		left_motor_set_speed(0);
         		right_motor_set_speed(0);
+
+        		if (!already_played)
+        		{
+        		    playMelody(6, ML_FORCE_CHANGE, NULL);
+        		    already_played = 1;
+        		}
         	}
 
         }
@@ -174,6 +183,7 @@ void show_gravity(imu_msg_t *imu_values)
             led7 = 1;
             left_motor_set_speed(-VITESSE_BASE);
             right_motor_set_speed(VITESSE_BASE);
+            already_played = 0;
         }
 
         else if(angle >= -M_PI && angle < -M_PI/2)
@@ -184,12 +194,19 @@ void show_gravity(imu_msg_t *imu_values)
             {
             	left_motor_set_speed(VITESSE_BASE*acceleration_average);
             	right_motor_set_speed(VITESSE_BASE*acceleration_average);
+            	already_played = 0;
             }
 
             else if (controle_front)
             {
             	left_motor_set_speed(0);
             	right_motor_set_speed(0);
+
+            	if (!already_played)
+            	{
+            		playMelody(6, ML_FORCE_CHANGE, NULL);
+            		already_played = 1;
+            	}
             }
 
         }
@@ -199,6 +216,7 @@ void show_gravity(imu_msg_t *imu_values)
             led3 = 1;
             left_motor_set_speed(VITESSE_BASE);
             right_motor_set_speed(-VITESSE_BASE);
+            already_played = 0;
         }
     }
 
@@ -303,7 +321,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 */
 
-    			set_rgb_led(0, 0, 0, 0);
+    			set_rgb_led(0, 0, 0, 0); ////////////////////////// faire un for ////////////////////////////////////
     			set_rgb_led(1, 0, 0, 0);
     			set_rgb_led(2, 0, 0, 0);
     			set_rgb_led(3, 0, 0, 0);
@@ -430,6 +448,9 @@ static THD_FUNCTION(controle_thd, arg)
     	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
 
 
+    	playMelody(0, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
+
+
 		// Reflect the orientation on the LEDs around the robot.
 		//e_display_angle();
 
@@ -484,7 +505,7 @@ int main(void)
     aseba_vm_init();
     aseba_can_start(&vmState);
     calibrate_ir();
-    chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO+1, controle_thd, NULL);
+    chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
     chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
 
     /* Infinite loop. */
