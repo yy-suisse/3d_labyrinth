@@ -289,9 +289,18 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     chRegSetThreadName(__FUNCTION__);
 
     systime_t time;
+    static int init_ambiant[8];
+
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
+
+    calibrate_ir();
+
+    for (int j =0; j<8;j++)
+       {
+       	init_ambiant[j]=prox_values.ambient[j];
+       }
 
 
     while(1) {
@@ -325,6 +334,13 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     			set_rgb_led(1, 0, 0, 0);
     			set_rgb_led(2, 0, 0, 0);
     			set_rgb_led(3, 0, 0, 0);
+
+
+    			for(int i=0;i<8;i++)
+    			{
+    			chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
+    			chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambiant[i]);
+    			}
 
 
 
