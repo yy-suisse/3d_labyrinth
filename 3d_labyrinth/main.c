@@ -43,7 +43,7 @@
 
 static bool controle_front = 0;
 static bool controle_back = 0;
-
+static bool detection_fin = 0;
 
 #define VITESSE_BASE 				150
 
@@ -289,26 +289,33 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     chRegSetThreadName(__FUNCTION__);
 
     systime_t time;
-    static int init_ambiant[8];
+    static int init_ambient[8];
+    static bool init_in_process = 1;
 
+    static bool envoie = 1;
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
 
     calibrate_ir();
 
-    for (int j =0; j<8;j++)
-       {
-       	init_ambiant[j]=prox_values.ambient[j];
-       }
-
 
     while(1) {
     	time = chVTGetSystemTime();
 
+    	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
+
+    	if(init_in_process)
+    	{
+    			for (int j =0; j<8;j++)
+    			{
+    				init_ambient[j]=prox_values.ambient[j];
+    			}
+
+    			init_in_process=0;
+    	}
 
 
-    			messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 			/* // Read proximity sensors.
 
 				chprintf((BaseSequentialStream *)&SDU1, "LED 1 value is : %4d,\n"  ,prox_values.delta[0]);
@@ -335,110 +342,88 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     			set_rgb_led(2, 0, 0, 0);
     			set_rgb_led(3, 0, 0, 0);
 
-
-    			for(int i=0;i<8;i++)
+/*
+    			if (envoie)
     			{
-    			chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
-    			chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambiant[i]);
+					for(int i=0;i<8;i++)
+					{
+						chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
+						chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambient[i]);
+						//chprintf((BaseSequentialStream *)&SDU1, "LED %d reflected value is : %4d,\r\n"  ,i,prox_values.reflected[i]);
+						chprintf((BaseSequentialStream *)&SDU1, "LED %d distance initial value is : %4d,\r\n"  ,i,prox_values.delta[i]);
+					}
+
+
+    			}
+
+    			envoie = !envoie;
+
+ */
+    			uint8_t count=0;
+
+    			for(uint8_t k = 0 ; k < 8; k++)
+    			{
+    				if(prox_values.ambient[k]<4000)
+    				{
+    					count++;
+    				}
+
+    			}
+
+    			if (count >= 2)
+    			{
+    				detection_fin = 1;
+    				set_rgb_led(0, 10,5 , 2);
+    				set_rgb_led(1, 10,5 , 2);
+    				set_rgb_led(2, 10,5 , 2);
+    				set_rgb_led(3, 10,5 , 2);
+
+    			}
+
+    			else
+    			{
+    				detection_fin = 0;
+    				set_rgb_led(0, 0, 0, 0);
+    			    set_rgb_led(1, 0, 0, 0);
+    			    set_rgb_led(2, 0, 0, 0);
+    			    set_rgb_led(3, 0, 0, 0);
     			}
 
 
-
 				if (abs(prox_values.delta[0])>200) /// MAGIC NUMBER
-					{
+				{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(3, 10,10 , 0);
-					//playMelody(6, ML_SIMPLE_PLAY, NULL);
-
-					// chprintf((BaseSequentialStream *)&SDU1, "front value is : %d, turning around" ,abs(prox_values.delta[0]));
-					 //chprintf((BaseSequentialStream *)&SDU1, "\r\n");
 					 controle_front = 1;
-					}
+				}
 
 
 
 
 				if (abs(prox_values.delta[2])>200)
-					{
+				{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(1, 10,10 , 0);
-					//playMelody(6, ML_SIMPLE_PLAY, NULL);
-					//chprintf((BaseSequentialStream *)&SDU1, "right value is : %4d, ahead" ,abs(prox_values.delta[2]));
-					 //chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-
-					}
+				}
 
 
 
 				if (abs(prox_values.delta[3])>200)
-					{
-				set_rgb_led(1, 10,10 , 0);
-				set_rgb_led(2, 10,10 , 0);
-				//playMelody(6, ML_SIMPLE_PLAY, NULL);
-				//chprintf((BaseSequentialStream *)&SDU1, "back value is : %4d, turing around" ,abs(prox_values.delta[3]));
-				//chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				controle_back = 1 ;
-
-					}
+				{
+					set_rgb_led(1, 10,10 , 0);
+					set_rgb_led(2, 10,10 , 0);
+					controle_back = 1 ;
+				}
 
 
 
 				if (abs(prox_values.delta[5])>200)
-					{
-				set_rgb_led(2, 10,10 , 0);
-				set_rgb_led(3, 10,10 , 0);
-				//playMelody(6, ML_SIMPLE_PLAY, NULL);
-				//int i=0;
-				//i=abs(prox_values.delta[5]);
-				//chprintf((BaseSequentialStream *)&SDU1, "left value is : %d, ahead" ,i);
-				//chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-
-					}
-				//chprintf((BaseSequentialStream *)&SDU1, "statue value is : %d", statue);
-				//chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-
-				/*if(statue ==1)
 				{
-					left_motor_set_speed(0);
-					right_motor_set_speed(0);
-
-				}*/
-
-
-
-
-				//if (prox_values.delta[6]>200)
-			//	if (prox_values.delta[7]>200)
-
-		       // right_motor_set_speed(rightSpeed);
-		        //left_motor_set_speed(leftSpeed);
-
-
-				/*if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
-					continue;
-				}*/
-
-
-
-				// Sensors info print: each line contains data related to a single sensor.
-				/* for (uint8_t i = 0; i < sizeof(prox_values.ambient)/sizeof(prox_values.ambient[0]); i++) {
-		        //for (uint8_t i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
-		        	chprintf((BaseSequentialStream *)&SDU1, "value i=%d" ,i);
-		        	chprintf((BaseSequentialStream *)&SDU1, "LED %d value is : %4d," ,i, prox_values.ambient[i]);
-		        	chprintf((BaseSequentialStream *)&SDU1, "LED %d value is : %4d," ,i, prox_values.reflected[i]);
-		        	chprintf((BaseSequentialStream *)&SDU1, "LED %d value is : %4d," ,i ,prox_values.delta[i]);
-		        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-
-		        }
-		        chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-*/
-
-
-
+					set_rgb_led(2, 10,10 , 0);
+					set_rgb_led(3, 10,10 , 0);
+				}
 
 		        chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
-
-
 
 
 
