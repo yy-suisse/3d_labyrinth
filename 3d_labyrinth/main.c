@@ -98,6 +98,7 @@ void show_gravity(imu_msg_t *imu_values)
     float acceleration_average = 0;			//////////////////////////// FILTRE MOYENNE PEUT ETRE ESSAYER AVEC DSP
 
     static bool already_played = 0;
+    static bool already_played_fin = 0;
 
 
 
@@ -134,152 +135,128 @@ void show_gravity(imu_msg_t *imu_values)
     *       FRONT
     */
 
-    if(fabs(accel[X_AXIS]) > threshold || fabs(accel[Y_AXIS]) > threshold){
+    if (!detection_fin)
+    {
 
-        chSysLock();
+		if(fabs(accel[X_AXIS]) > threshold || fabs(accel[Y_AXIS]) > threshold)
+		{
 
-        //clock wise angle in rad with 0 being the back of the e-puck2 (Y axis of the IMU)
-        float angle = atan2(accel[X_AXIS], accel[Y_AXIS]);
+			chSysLock();
 
-        chSysUnlock();
+			//clock wise angle in rad with 0 being the back of the e-puck2 (Y axis of the IMU)
+			float angle = atan2(accel[X_AXIS], accel[Y_AXIS]);
 
-        //rotates the angle by 45 degrees (simpler to compare with PI and PI/2 than with 5*PI/4)
-        angle += M_PI/4;
+			chSysUnlock();
 
-        //if the angle is greater than PI, then it has shifted on the -PI side of the quadrant
-        //so we correct it
-        if(angle > M_PI){
-            angle = -2 * M_PI + angle;
-        }
+			//rotates the angle by 45 degrees (simpler to compare with PI and PI/2 than with 5*PI/4)
+			angle += M_PI/4;
+
+			//if the angle is greater than PI, then it has shifted on the -PI side of the quadrant
+			//so we correct it
+			if(angle > M_PI){
+				angle = -2 * M_PI + angle;
+			}
 
 
-        if(angle >= 0 && angle < M_PI/2)
-        {
-        	led5 = 1;
+				if(angle >= 0 && angle < M_PI/2)
+				{
+					led5 = 1;
 
-        	if (!controle_back)
-        	{
-        		left_motor_set_speed(-VITESSE_BASE*acceleration_average);
-        		right_motor_set_speed(-VITESSE_BASE*acceleration_average);
-        		already_played = 0;
-        	}
+					if (!controle_back)
+					{
+						left_motor_set_speed(-VITESSE_BASE*acceleration_average);
+						right_motor_set_speed(-VITESSE_BASE*acceleration_average);
+						already_played = 0;
+					}
 
-        	else if (controle_back)
-        	{
-        		left_motor_set_speed(0);
-        		right_motor_set_speed(0);
+					else if (controle_back)
+					{
+						left_motor_set_speed(0);
+						right_motor_set_speed(0);
 
-        		if (!already_played)
-        		{
-        		    playMelody(6, ML_FORCE_CHANGE, NULL);
-        		    already_played = 1;
-        		}
-        	}
+						if (!already_played)
+						{
+							playMelody(6, ML_FORCE_CHANGE, NULL);
+							already_played = 1;
+						}
+					}
 
-        }
+				}
 
-        else if(angle >= M_PI/2 && angle < M_PI)
-        {
-            led7 = 1;
-            left_motor_set_speed(-VITESSE_BASE);
-            right_motor_set_speed(VITESSE_BASE);
-            already_played = 0;
-        }
+				else if(angle >= M_PI/2 && angle < M_PI)
+				{
+					led7 = 1;
+					left_motor_set_speed(-VITESSE_BASE);
+					right_motor_set_speed(VITESSE_BASE);
+					already_played = 0;
+				}
 
-        else if(angle >= -M_PI && angle < -M_PI/2)
-        {
-            led1 = 1;
+				else if(angle >= -M_PI && angle < -M_PI/2)
+				{
+					led1 = 1;
 
-            if(!controle_front)
-            {
-            	left_motor_set_speed(VITESSE_BASE*acceleration_average);
-            	right_motor_set_speed(VITESSE_BASE*acceleration_average);
-            	already_played = 0;
-            }
+					if(!controle_front)
+					{
+						left_motor_set_speed(VITESSE_BASE*acceleration_average);
+						right_motor_set_speed(VITESSE_BASE*acceleration_average);
+						already_played = 0;
+					}
 
-            else if (controle_front)
-            {
-            	left_motor_set_speed(0);
-            	right_motor_set_speed(0);
+					else if (controle_front)
+					{
+						left_motor_set_speed(0);
+						right_motor_set_speed(0);
 
-            	if (!already_played)
-            	{
-            		playMelody(6, ML_FORCE_CHANGE, NULL);
-            		already_played = 1;
-            	}
-            }
+						if (!already_played)
+						{
+							playMelody(6, ML_FORCE_CHANGE, NULL);
+							already_played = 1;
+						}
+					}
 
-        }
+				}
 
-        else if(angle >= -M_PI/2 && angle < 0)
-        {
-            led3 = 1;
-            left_motor_set_speed(VITESSE_BASE);
-            right_motor_set_speed(-VITESSE_BASE);
-            already_played = 0;
-        }
+				else if(angle >= -M_PI/2 && angle < 0)
+				{
+					led3 = 1;
+					left_motor_set_speed(VITESSE_BASE);
+					right_motor_set_speed(-VITESSE_BASE);
+					already_played = 0;
+				}
+			}
+
+			// cas ou on est en dessous du threshold -> pas de mouvements
+			else
+			{
+				left_motor_set_speed(0);
+				right_motor_set_speed(0);
+			}
+
+
+
+
+			//we invert the values because a led is turned on if the signal is low
+			palWritePad(GPIOD, GPIOD_LED1, led1 ? 0 : 1);
+			palWritePad(GPIOD, GPIOD_LED3, led3 ? 0 : 1);
+			palWritePad(GPIOD, GPIOD_LED5, led5 ? 0 : 1);
+			palWritePad(GPIOD, GPIOD_LED7, led7 ? 0 : 1);
+
+			controle_front = 0;
+			controle_back = 0;
+
     }
 
-    // cas ou on est en dessous du threshold -> pas de mouvements
-    else
+    else if (detection_fin)
     {
     	left_motor_set_speed(0);
     	right_motor_set_speed(0);
+
+    	if (!already_played_fin)
+    	{
+    		playMelody(7, ML_FORCE_CHANGE, NULL);
+    		already_played_fin = 1;
+    	}
     }
-
-    /*
-     *   example 2 with only conditions
-     */
-/*
-     chSysLock();
-     GPTD11.tim->CNT = 0;
-
-     //we find which led of each axis should be turned on
-     if(accel[X_AXIS] > threshold)
-         led7 = 1;
-     else if(accel[X_AXIS] < -threshold)
-         led3 = 1;
-
-     if(accel[Y_AXIS] > threshold)
-         led5 = 1;
-     else if(accel[Y_AXIS] < -threshold)
-         led1 = 1;
-
-     //if two leds are turned on, turn off the one with the smaller
-     //accelerometer value
-     if(led1 && led3){
-         if(accel[Y_AXIS] < accel[X_AXIS])
-             led3 = 0;
-         else
-             led1 = 0;
-     }else if(led3 && led5){
-         if(accel[X_AXIS] < -accel[Y_AXIS])
-             led5 = 0;
-         else
-             led3 = 0;
-     }else if(led5 && led7){
-         if(accel[Y_AXIS] > accel[X_AXIS])
-             led7 = 0;
-         else
-             led5 = 0;
-     }else if(led7 && led1){
-         if(accel[X_AXIS] > -accel[Y_AXIS])
-             led1 = 0;
-         else
-             led7 = 0;
-     }
-     time = GPTD11.tim->CNT;
-     chSysUnlock();*/
-
-
-    //we invert the values because a led is turned on if the signal is low
-    palWritePad(GPIOD, GPIOD_LED1, led1 ? 0 : 1);
-    palWritePad(GPIOD, GPIOD_LED3, led3 ? 0 : 1);
-    palWritePad(GPIOD, GPIOD_LED5, led5 ? 0 : 1);
-    palWritePad(GPIOD, GPIOD_LED7, led7 ? 0 : 1);
-
-    controle_front = 0;
-    controle_back = 0;
 
 }
 
@@ -349,44 +326,37 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 					{
 						chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
 						chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambient[i]);
+						chprintf((BaseSequentialStream *)&SDU1, "LED %d variation lumiere ambient value is : %4d,\r\n"  ,i,init_ambient[i]-prox_values.ambient[i]);
+
 						//chprintf((BaseSequentialStream *)&SDU1, "LED %d reflected value is : %4d,\r\n"  ,i,prox_values.reflected[i]);
-						chprintf((BaseSequentialStream *)&SDU1, "LED %d distance initial value is : %4d,\r\n"  ,i,prox_values.delta[i]);
+						//chprintf((BaseSequentialStream *)&SDU1, "LED %d distance initial value is : %4d,\r\n"  ,i,prox_values.delta[i]);
 					}
 
 
     			}
 
     			envoie = !envoie;
+*/
 
- */
-    			uint8_t count=0;
+
+
+
+    			//uint8_t count=0;
+    			uint8_t sum =0;
 
     			for(uint8_t k = 0 ; k < 8; k++)
     			{
-    				if(prox_values.ambient[k]<4000)
-    				{
-    					count++;
-    				}
-
+    				sum =+	init_ambient[k]-prox_values.ambient[k];
     			}
 
-    			if (count >= 2)
+    			if (sum >=250)
     			{
-    				detection_fin = 1;
+
     				set_rgb_led(0, 10,5 , 2);
     				set_rgb_led(1, 10,5 , 2);
     				set_rgb_led(2, 10,5 , 2);
     				set_rgb_led(3, 10,5 , 2);
-
-    			}
-
-    			else
-    			{
-    				detection_fin = 0;
-    				set_rgb_led(0, 0, 0, 0);
-    			    set_rgb_led(1, 0, 0, 0);
-    			    set_rgb_led(2, 0, 0, 0);
-    			    set_rgb_led(3, 0, 0, 0);
+    				detection_fin=1;
     			}
 
 
@@ -448,9 +418,10 @@ static THD_FUNCTION(controle_thd, arg)
     	//wait for new measures to be published
     	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
 
-
-    	playMelody(0, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
-
+    	if(!detection_fin)
+    	{
+    		playMelody(0, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
+    	}
 
 		// Reflect the orientation on the LEDs around the robot.
 		//e_display_angle();
