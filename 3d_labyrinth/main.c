@@ -90,11 +90,6 @@ bool get_controle_front(void)
 	return controle_front;
 }
 
-bool get_controle_back(void)
-{
-	return controle_back;
-}
-
 
 void show_gravity(imu_msg_t *imu_values)
 {
@@ -258,8 +253,6 @@ void show_gravity(imu_msg_t *imu_values)
 			palWritePad(GPIOD, GPIOD_LED5, led5 ? 0 : 1);
 			palWritePad(GPIOD, GPIOD_LED7, led7 ? 0 : 1);
 
-			controle_front = 0;
-			controle_back = 0;
 
     }
 
@@ -384,7 +377,10 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 					 controle_front = 1;
 				}
 
-
+				else if (abs(prox_values.delta[0])<200)
+				{
+					controle_front = 0;
+				}
 
 
 				if (abs(prox_values.delta[2])>200)
@@ -395,6 +391,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
+
 				if (abs(prox_values.delta[3])>200)
 				{
 					set_rgb_led(1, 10,10 , 0);
@@ -402,6 +399,11 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 					controle_back = 1 ;
 				}
 
+
+				else if (abs(prox_values.delta[3])<200)
+				{
+					controle_back = 0;
+				}
 
 
 				if (abs(prox_values.delta[5])>200)

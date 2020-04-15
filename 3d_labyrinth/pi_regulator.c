@@ -47,6 +47,8 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     int16_t speed = 0;
 
+    //bool controle_front_pi =0;
+
     while(1){
         time = chVTGetSystemTime();
 
@@ -54,10 +56,23 @@ static THD_FUNCTION(PiRegulator, arg) {
         //distance_cm is modified by the image processing thread
         speed = pi_regulator(get_phase_dif());
 
+        //controle_front_pi = get_controle_front();
 
-        //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(MOTOR_SPEED_LIMIT/4 + speed);
-		left_motor_set_speed(MOTOR_SPEED_LIMIT/4 -speed);
+        if (get_controle_front())
+        {
+        	right_motor_set_speed(speed);
+        	left_motor_set_speed(-speed);
+        }
+
+
+        else
+        {
+			//applies the speed from the PI regulator and the correction for the rotation
+			right_motor_set_speed(MOTOR_SPEED_LIMIT/4 + speed);
+			left_motor_set_speed(MOTOR_SPEED_LIMIT/4 -speed);
+        }
+
+        //controle_front_pi = 0;
 
         //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));
