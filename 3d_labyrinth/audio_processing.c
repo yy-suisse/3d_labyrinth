@@ -25,6 +25,12 @@ static float micRight_output[FFT_SIZE];
 static float micFront_output[FFT_SIZE];
 static float micBack_output[FFT_SIZE];
 
+static float phase_dif = 0;
+static float phase_dif_old = 0;
+
+#define FILTRE_COEF 0.3
+
+
 #define MIN_VALUE_THRESHOLD	10000 
 
 #define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
@@ -43,47 +49,57 @@ static float micBack_output[FFT_SIZE];
 #define FREQ_BACKWARD_L		(FREQ_BACKWARD-1)
 #define FREQ_BACKWARD_H		(FREQ_BACKWARD+1)
 
+
 /*
 *	Simple function used to detect the highest value in a buffer
 *	and to execute a motor command depending on it
 */
-void sound_remote(float* data){
-	float max_norm = MIN_VALUE_THRESHOLD;
-	int16_t max_norm_index = -1; 
+void sound_remote(float* data1, float* data2){
 
-	//search for the highest peak
-	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
-		if(data[i] > max_norm){
-			max_norm = data[i];
-			max_norm_index = i;
+	float phase1 = 0;
+	float phase2 = 0;
+
+	float max_norm1 = MIN_VALUE_THRESHOLD;
+	int16_t max_norm_index1 = -1;
+
+	float max_norm2 = MIN_VALUE_THRESHOLD;
+	int16_t max_norm_index2 = -1;
+
+
+	//search for the highest peak in data1
+	for(uint16_t i = 0 ; i <= FFT_SIZE/2 ; i++){
+		if(data1[i] > max_norm1){
+			max_norm1 = data1[i];
+			max_norm_index1 = i;
 		}
 	}
 
-	//go forward
-	if(max_norm_index >= FREQ_FORWARD_L && max_norm_index <= FREQ_FORWARD_H){
-		left_motor_set_speed(600);
-		right_motor_set_speed(600);
+	//search for the highest peak in data2
+	for(uint16_t j = 0 ; j <= FFT_SIZE/2 ; j++){
+		if(data2[j] > max_norm2){
+			max_norm2 = data2[j];
+			max_norm_index2 = j;
+		}
 	}
-	//turn left
-	else if(max_norm_index >= FREQ_LEFT_L && max_norm_index <= FREQ_LEFT_H){
-		left_motor_set_speed(-600);
-		right_motor_set_speed(600);
+
+	if (max_norm_index1 == max_norm_index2)
+	{
+		// atan2f (x,y) renvoie arctan (x/y) dans -pi pi
+		phase1 = atan2f(micLeft_cmplx_input[2*max_norm_index1+1], micLeft_cmplx_input[2*max_norm_index1]);
+		phase2 = atan2f(micRight_cmplx_input[2*max_norm_index2+1], micRight_cmplx_input[2*max_norm_index2]);
+
+		phase_dif = (1-FILTRE_COEF)*(phase1 - phase2) + FILTRE_COEF*phase_dif_old;
+
+
+
+
+		if (phase_dif > -0.5 && phase_dif < 0.5)
+		{
+			phase_dif_old = phase_dif;
+			//chprintf((BaseSequentialStream *) &SDU1, "phase_dif = %f \r\n",phase_dif);
+		}
+
 	}
-	//turn right
-	else if(max_norm_index >= FREQ_RIGHT_L && max_norm_index <= FREQ_RIGHT_H){
-		left_motor_set_speed(600);
-		right_motor_set_speed(-600);
-	}
-	//go backward
-	else if(max_norm_index >= FREQ_BACKWARD_L && max_norm_index <= FREQ_BACKWARD_H){
-		left_motor_set_speed(-600);
-		right_motor_set_speed(-600);
-	}
-	else{
-		left_motor_set_speed(0);
-		right_motor_set_speed(0);
-	}
-	
 }
 
 /*
@@ -108,6 +124,8 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 	static uint16_t nb_samples = 0;
 	static uint8_t mustSend = 0;
 
+
+
 	//loop to fill the buffers
 	for(uint16_t i = 0 ; i < num_samples ; i+=4){
 		//construct an array of complex numbers. Put 0 to the imaginary part
@@ -115,6 +133,7 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		micLeft_cmplx_input[nb_samples] = (float)data[i + MIC_LEFT];
 		micBack_cmplx_input[nb_samples] = (float)data[i + MIC_BACK];
 		micFront_cmplx_input[nb_samples] = (float)data[i + MIC_FRONT];
+
 
 		nb_samples++;
 
@@ -131,6 +150,8 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		}
 	}
 
+
+
 	if(nb_samples >= (2 * FFT_SIZE)){
 		/*	FFT proccessing
 		*
@@ -142,6 +163,7 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micFront_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micBack_cmplx_input);
+
 
 		/*	Magnitude processing
 		*
@@ -155,17 +177,18 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micBack_cmplx_input, micBack_output, FFT_SIZE);
 
+
 		//sends only one FFT result over 10 for 1 mic to not flood the computer
 		//sends to UART3
-		if(mustSend > 8){
+	/*	if(mustSend > 8){
 			//signals to send the result to the computer
 			chBSemSignal(&sendToComputer_sem);
 			mustSend = 0;
-		}
+		}*/
 		nb_samples = 0;
-		mustSend++;
+		//mustSend++;
 
-		sound_remote(micLeft_output);
+		sound_remote(micLeft_output, micRight_output);
 	}
 }
 
@@ -201,4 +224,14 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else{
 		return NULL;
 	}
+}
+
+float get_phase_dif(void){
+
+	if (phase_dif > -0.5 && phase_dif < 0.5)
+	{
+		return phase_dif;
+	}
+
+	else return phase_dif_old;
 }

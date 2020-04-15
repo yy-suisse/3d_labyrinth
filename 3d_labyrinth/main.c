@@ -341,7 +341,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-    			//uint8_t count=0;
+
     			uint8_t sum =0;
 
     			for(uint8_t k = 0 ; k < 8; k++)
