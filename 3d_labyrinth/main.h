@@ -14,6 +14,9 @@ extern "C" {
 #define KI 						3.5f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
+bool get_controle_front(void);
+bool get_controle_back(void);
+
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
 

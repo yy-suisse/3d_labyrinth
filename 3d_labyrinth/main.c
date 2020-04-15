@@ -85,6 +85,16 @@ static void serial_start(void)
 	sdStart(&SD3, &ser_cfg); // UART3.
 }
 
+bool get_controle_front(void)
+{
+	return controle_front;
+}
+
+bool get_controle_back(void)
+{
+	return controle_back;
+}
+
 
 void show_gravity(imu_msg_t *imu_values)
 {
@@ -473,6 +483,7 @@ int main(void)
 	if(get_selector() == MODE_IMU)
 	{
 		imu_start();
+		chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
 	}
 
 	if (get_selector() == MODE_SON)
@@ -493,8 +504,8 @@ int main(void)
     aseba_vm_init();
     aseba_can_start(&vmState);
     calibrate_ir();
-    //chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
-    //chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
+
+    chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
 
     /* Infinite loop. */
     while (1) {
