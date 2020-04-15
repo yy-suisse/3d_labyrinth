@@ -41,10 +41,17 @@
 #include "communication.h"
 #include "uc_usage.h"
 
+#include <audio_processing.h>
+#include <pi_regulator.h>
+#include <fft.h>
+#include <arm_math.h>
+
 static bool controle_front = 0;
 static bool controle_back = 0;
 static bool detection_fin = 0;
 
+#define MODE_IMU 0 //// enum
+#define MODE_SON 1
 #define VITESSE_BASE 				150
 
 
@@ -455,15 +462,24 @@ int main(void)
 	battery_level_start();
 	dac_start();
 	exti_start();
-	imu_start();
 	ir_remote_start();
 	spi_comm_start();
 	VL53L0X_start();
 	serial_start();
-	mic_start(NULL);
 	sdio_start();
 	playMelodyStart();
 	playSoundFileStart();
+
+	if(get_selector() == MODE_IMU)
+	{
+		imu_start();
+	}
+
+	if (get_selector() == MODE_SON)
+	{
+		mic_start(&processAudioData);
+		pi_regulator_start();
+	}
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
@@ -477,8 +493,8 @@ int main(void)
     aseba_vm_init();
     aseba_can_start(&vmState);
     calibrate_ir();
-    chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
-    chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
+    //chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
+    //chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
 
     /* Infinite loop. */
     while (1) {
