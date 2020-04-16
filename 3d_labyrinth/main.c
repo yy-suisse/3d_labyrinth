@@ -91,6 +91,12 @@ bool get_controle_front(void)
 }
 
 
+bool get_detection_fin(void)
+{
+	return detection_fin;
+}
+
+
 void show_gravity(imu_msg_t *imu_values)
 {
 
@@ -279,6 +285,8 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     static int init_ambient[8];
     static bool init_in_process = 1;
 
+    static int16_t sum =0;
+
     static bool envoie = 1;
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
@@ -329,35 +337,36 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     			set_rgb_led(2, 0, 0, 0);
     			set_rgb_led(3, 0, 0, 0);
 
-/*
-    			if (envoie)
-    			{
-					for(int i=0;i<8;i++)
-					{
-						chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
-						chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambient[i]);
-						chprintf((BaseSequentialStream *)&SDU1, "LED %d variation lumiere ambient value is : %4d,\r\n"  ,i,init_ambient[i]-prox_values.ambient[i]);
-
-						//chprintf((BaseSequentialStream *)&SDU1, "LED %d reflected value is : %4d,\r\n"  ,i,prox_values.reflected[i]);
-						//chprintf((BaseSequentialStream *)&SDU1, "LED %d distance initial value is : %4d,\r\n"  ,i,prox_values.delta[i]);
-					}
-
-
-    			}
-
-    			envoie = !envoie;
-*/
 
 
 
 
 
-    			uint8_t sum =0;
+
+
+
 
     			for(uint8_t k = 0 ; k < 8; k++)
     			{
     				sum =+	init_ambient[k]-prox_values.ambient[k];
     			}
+
+    		/*	if (envoie)
+    			    			{
+    								for(int i=0;i<8;i++)
+    								{
+    									chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
+    									chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambient[i]);
+    									chprintf((BaseSequentialStream *)&SDU1, "LED %d variation lumiere ambient value is : %4d,\r\n"  ,i,init_ambient[i]-prox_values.ambient[i]);
+
+    									//chprintf((BaseSequentialStream *)&SDU1, "LED %d reflected value is : %4d,\r\n"  ,i,prox_values.reflected[i]);
+    									//chprintf((BaseSequentialStream *)&SDU1, "LED %d distance initial value is : %4d,\r\n"  ,i,prox_values.delta[i]);
+    								}
+
+    								chprintf((BaseSequentialStream *)&SDU1, "sum is  : %4d,\r\n"  ,sum);
+    			    			}
+
+    			    			envoie = !envoie;*/
 
     			if (sum >=250)
     			{
@@ -369,15 +378,17 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     				detection_fin=1;
     			}
 
+    			sum = 0;
 
-				if (abs(prox_values.delta[0])>200) /// MAGIC NUMBER
+
+				if (abs(prox_values.delta[0])>250 || abs(prox_values.delta[7])>250 || abs(prox_values.delta[6])>200 || abs(prox_values.delta[1])>200) /// MAG C NUMBER
 				{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(3, 10,10 , 0);
 					 controle_front = 1;
 				}
 
-				else if (abs(prox_values.delta[0])<200)
+				else if (abs(prox_values.delta[0])<250 && abs(prox_values.delta[7])<250 && abs(prox_values.delta[6])<200 && abs(prox_values.delta[1])<200)
 				{
 					controle_front = 0;
 				}
@@ -392,7 +403,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-				if (abs(prox_values.delta[3])>200)
+				if (abs(prox_values.delta[3])>250  || abs(prox_values.delta[4])>250)
 				{
 					set_rgb_led(1, 10,10 , 0);
 					set_rgb_led(2, 10,10 , 0);
@@ -400,7 +411,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 				}
 
 
-				else if (abs(prox_values.delta[3])<200)
+				else if (abs(prox_values.delta[3])<250 && abs(prox_values.delta[4])<250)
 				{
 					controle_back = 0;
 				}
@@ -442,9 +453,6 @@ static THD_FUNCTION(controle_thd, arg)
     		playMelody(0, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
     	}
 
-		// Reflect the orientation on the LEDs around the robot.
-		//e_display_angle();
-
     	show_gravity(&imu_values);
 		chThdSleepMilliseconds(100);
     }
@@ -482,13 +490,13 @@ int main(void)
 	playMelodyStart();
 	playSoundFileStart();
 
-	if(get_selector() == MODE_IMU)
+	if(get_selector()%2 == MODE_IMU)
 	{
 		imu_start();
 		chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
 	}
 
-	if (get_selector() == MODE_SON)
+	if (get_selector()%2 == MODE_SON)
 	{
 		mic_start(&processAudioData);
 		pi_regulator_start();
