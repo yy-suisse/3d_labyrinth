@@ -53,8 +53,10 @@ static bool detection_fin = 0;
 #define MODE_IMU 0 //// enum
 #define MODE_SON 1
 #define VITESSE_BASE 				150
-
-
+#define NOMBRE_LED_RGB				4
+#define SEUIL_DETECTION_FIN			250
+#define SEUIL_PROXI_FB				250
+#define SEUIL_PROXI_LATERAL			200
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
 messagebus_t bus;
@@ -282,12 +284,12 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     chRegSetThreadName(__FUNCTION__);
 
     systime_t time;
-    static int init_ambient[8];
-    static bool init_in_process = 1;
+    static int init_ambient[PROXIMITY_NB_CHANNELS];
+    static bool init_in_process = true;
 
-    static int16_t sum =0;
+    static int16_t sum = 0;
 
-    static bool envoie = 1;
+    static bool envoie = true;
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
@@ -302,12 +304,12 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
     	if(init_in_process)
     	{
-    			for (int j =0; j<8;j++)
+    			for (uint8_t j = 0; j < PROXIMITY_NB_CHANNELS; j++)
     			{
     				init_ambient[j]=prox_values.ambient[j];
     			}
 
-    			init_in_process=0;
+    			init_in_process = false;
     	}
 
 
@@ -332,10 +334,10 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 */
 
-    			set_rgb_led(0, 0, 0, 0); ////////////////////////// faire un for ////////////////////////////////////
-    			set_rgb_led(1, 0, 0, 0);
-    			set_rgb_led(2, 0, 0, 0);
-    			set_rgb_led(3, 0, 0, 0);
+    	for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
+    		{
+    			set_rgb_led(i, 0, 0, 0);
+    		}
 
 
 
@@ -346,55 +348,39 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-    			for(uint8_t k = 0 ; k < 8; k++)
+    			for(uint8_t k = 0 ; k < PROXIMITY_NB_CHANNELS; k++)
     			{
     				sum =+	init_ambient[k]-prox_values.ambient[k];
     			}
 
-    		/*	if (envoie)
-    			    			{
-    								for(int i=0;i<8;i++)
-    								{
-    									chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient actuel value is : %4d,\r\n"  ,i,prox_values.ambient[i]);
-    									chprintf((BaseSequentialStream *)&SDU1, "LED %d ambient initial value is : %4d,\r\n"  ,i,init_ambient[i]);
-    									chprintf((BaseSequentialStream *)&SDU1, "LED %d variation lumiere ambient value is : %4d,\r\n"  ,i,init_ambient[i]-prox_values.ambient[i]);
 
-    									//chprintf((BaseSequentialStream *)&SDU1, "LED %d reflected value is : %4d,\r\n"  ,i,prox_values.reflected[i]);
-    									//chprintf((BaseSequentialStream *)&SDU1, "LED %d distance initial value is : %4d,\r\n"  ,i,prox_values.delta[i]);
-    								}
 
-    								chprintf((BaseSequentialStream *)&SDU1, "sum is  : %4d,\r\n"  ,sum);
-    			    			}
-
-    			    			envoie = !envoie;*/
-
-    			if (sum >=250)
+    			if (sum >=SEUIL_DETECTION_FIN)
     			{
-
-    				set_rgb_led(0, 10,5 , 2);
-    				set_rgb_led(1, 10,5 , 2);
-    				set_rgb_led(2, 10,5 , 2);
-    				set_rgb_led(3, 10,5 , 2);
-    				detection_fin=1;
+    				for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
+    				{
+    					set_rgb_led(i, 10,5 , 2);
+    				}
+    				detection_fin = true;
     			}
 
     			sum = 0;
 
 
-				if (abs(prox_values.delta[0])>250 || abs(prox_values.delta[7])>250 || abs(prox_values.delta[6])>200 || abs(prox_values.delta[1])>200) /// MAG C NUMBER
+				if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL) /// MAG C NUMBER
 				{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(3, 10,10 , 0);
-					 controle_front = 1;
+					controle_front = true ;
 				}
 
-				else if (abs(prox_values.delta[0])<250 && abs(prox_values.delta[7])<250 && abs(prox_values.delta[6])<200 && abs(prox_values.delta[1])<200)
+				else if (abs(prox_values.delta[0])<SEUIL_PROXI_FB && abs(prox_values.delta[7])<SEUIL_PROXI_FB && abs(prox_values.delta[6])<SEUIL_PROXI_LATERAL && abs(prox_values.delta[1])<SEUIL_PROXI_LATERAL)
 				{
-					controle_front = 0;
+					controle_front = false;
 				}
 
 
-				if (abs(prox_values.delta[2])>200)
+				if (abs(prox_values.delta[2])>SEUIL_PROXI_LATERAL)
 				{
 					set_rgb_led(0, 10,10 , 0);
 					set_rgb_led(1, 10,10 , 0);
@@ -403,21 +389,21 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-				if (abs(prox_values.delta[3])>250  || abs(prox_values.delta[4])>250)
+				if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
 				{
 					set_rgb_led(1, 10,10 , 0);
 					set_rgb_led(2, 10,10 , 0);
-					controle_back = 1 ;
+					controle_back = true ;
 				}
 
 
-				else if (abs(prox_values.delta[3])<250 && abs(prox_values.delta[4])<250)
+				else if (abs(prox_values.delta[3])<SEUIL_PROXI_FB && abs(prox_values.delta[4])<SEUIL_PROXI_FB)
 				{
-					controle_back = 0;
+					controle_back = false;
 				}
 
 
-				if (abs(prox_values.delta[5])>200)
+				if (abs(prox_values.delta[5])>SEUIL_PROXI_LATERAL)
 				{
 					set_rgb_led(2, 10,10 , 0);
 					set_rgb_led(3, 10,10 , 0);
@@ -450,7 +436,7 @@ static THD_FUNCTION(controle_thd, arg)
 
     	if(!detection_fin)
     	{
-    		playMelody(0, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
+    		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
     	}
 
     	show_gravity(&imu_values);
