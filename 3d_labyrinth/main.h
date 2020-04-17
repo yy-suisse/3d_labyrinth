@@ -9,12 +9,20 @@ extern "C" {
 #include "msgbus/messagebus.h"
 #include "parameter/parameter.h"
 
+enum ETAT {MODE_IMU, MODE_SON};
+
+#define TRESHOLD_IMU 				0.4
+#define NB_VALEUR_FILTRE            8
+#define VITESSE_BASE 				150
+#define NO_SPEED					0
+
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
 #define KP						1000.0f
 #define KI 						3.5f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
 bool get_controle_front(void);
+
 bool get_detection_fin(void);
 
 

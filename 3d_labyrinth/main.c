@@ -50,10 +50,6 @@ static bool controle_front = 0;
 static bool controle_back = 0;
 static bool detection_fin = 0;
 
-#define MODE_IMU 0 //// enum
-#define MODE_SON 1
-#define VITESSE_BASE 				150
-
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
@@ -104,35 +100,32 @@ void show_gravity(imu_msg_t *imu_values)
     //select which one to turn on
     uint8_t led1 = 0, led3 = 0, led5 = 0, led7 = 0;
 
-    //threshold value to not use the leds when the robot is too horizontal
-    float threshold = 0.4;
-
     //create a pointer to the array for shorter name
     float *accel = imu_values->acceleration;
 
     // Filtre par moyenne pour éviter les accoups lors des changements de vitesse
-    static float tab_average[8] = {0};			// 8 en DEFINE
+    static float tab_average[NB_VALEUR_FILTRE] = {0};
     static uint8_t boucle = 0;
-    float acceleration_average = 0;			//////////////////////////// FILTRE MOYENNE PEUT ETRE ESSAYER AVEC DSP
+    float acceleration_average = 0;
 
-    static bool already_played = 0;
-    static bool already_played_fin = 0;
+    static bool already_played = FALSE;
+    static bool already_played_fin = FALSE;
 
 
 
     tab_average[boucle] = fabs(accel[Y_AXIS]);
     boucle++;
 
-    if (boucle == 8)
+    if (boucle == NB_VALEUR_FILTRE)
     {
     	boucle = 0;
     }
 
-    for(int i = 0; i < 8 ; i++)
+    for(uint8_t i = 0; i < NB_VALEUR_FILTRE ; i++)
     {
     	acceleration_average += tab_average[i];
     }
-    acceleration_average = acceleration_average / 8 ; //// SHIFT PLUTOT ///////////////////////////////
+    acceleration_average = acceleration_average / NB_VALEUR_FILTRE ; //// SHIFT PLUTOT ///////////////////////////////
 
     /*
     *   example 1 with trigonometry.
@@ -156,7 +149,7 @@ void show_gravity(imu_msg_t *imu_values)
     if (!detection_fin)
     {
 
-		if(fabs(accel[X_AXIS]) > threshold || fabs(accel[Y_AXIS]) > threshold)
+		if(fabs(accel[X_AXIS]) > TRESHOLD_IMU || fabs(accel[Y_AXIS]) > TRESHOLD_IMU)
 		{
 
 			chSysLock();
@@ -184,18 +177,18 @@ void show_gravity(imu_msg_t *imu_values)
 					{
 						left_motor_set_speed(-VITESSE_BASE*acceleration_average);
 						right_motor_set_speed(-VITESSE_BASE*acceleration_average);
-						already_played = 0;
+						already_played = FALSE;
 					}
 
 					else if (controle_back)
 					{
-						left_motor_set_speed(0);
-						right_motor_set_speed(0);
+						left_motor_set_speed(NO_SPEED);
+						right_motor_set_speed(NO_SPEED);
 
 						if (!already_played)
 						{
-							playMelody(6, ML_FORCE_CHANGE, NULL);
-							already_played = 1;
+							playMelody(MARIO_DEATH, ML_FORCE_CHANGE, NULL);
+							already_played = TRUE;
 						}
 					}
 
@@ -206,7 +199,7 @@ void show_gravity(imu_msg_t *imu_values)
 					led7 = 1;
 					left_motor_set_speed(-VITESSE_BASE);
 					right_motor_set_speed(VITESSE_BASE);
-					already_played = 0;
+					already_played = FALSE;
 				}
 
 				else if(angle >= -M_PI && angle < -M_PI/2)
@@ -217,18 +210,18 @@ void show_gravity(imu_msg_t *imu_values)
 					{
 						left_motor_set_speed(VITESSE_BASE*acceleration_average);
 						right_motor_set_speed(VITESSE_BASE*acceleration_average);
-						already_played = 0;
+						already_played = FALSE;
 					}
 
 					else if (controle_front)
 					{
-						left_motor_set_speed(0);
-						right_motor_set_speed(0);
+						left_motor_set_speed(NO_SPEED);
+						right_motor_set_speed(NO_SPEED);
 
 						if (!already_played)
 						{
-							playMelody(6, ML_FORCE_CHANGE, NULL);
-							already_played = 1;
+							playMelody(MARIO_DEATH, ML_FORCE_CHANGE, NULL);
+							already_played = TRUE;
 						}
 					}
 
@@ -239,15 +232,15 @@ void show_gravity(imu_msg_t *imu_values)
 					led3 = 1;
 					left_motor_set_speed(VITESSE_BASE);
 					right_motor_set_speed(-VITESSE_BASE);
-					already_played = 0;
+					already_played = FALSE;
 				}
 			}
 
 			// cas ou on est en dessous du threshold -> pas de mouvements
 			else
 			{
-				left_motor_set_speed(0);
-				right_motor_set_speed(0);
+				left_motor_set_speed(NO_SPEED);
+				right_motor_set_speed(NO_SPEED);
 			}
 
 
@@ -264,13 +257,13 @@ void show_gravity(imu_msg_t *imu_values)
 
     else if (detection_fin)
     {
-    	left_motor_set_speed(0);
-    	right_motor_set_speed(0);
+    	left_motor_set_speed(NO_SPEED);
+    	right_motor_set_speed(NO_SPEED);
 
     	if (!already_played_fin)
     	{
-    		playMelody(7, ML_FORCE_CHANGE, NULL);
-    		already_played_fin = 1;
+    		playMelody(MARIO_FLAG, ML_FORCE_CHANGE, NULL);
+    		already_played_fin = TRUE;
     	}
     }
 
@@ -450,7 +443,7 @@ static THD_FUNCTION(controle_thd, arg)
 
     	if(!detection_fin)
     	{
-    		playMelody(0, ML_SIMPLE_PLAY, NULL); /// MAGIC NUMBER
+    		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL);
     	}
 
     	show_gravity(&imu_values);

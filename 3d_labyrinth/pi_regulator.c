@@ -49,26 +49,24 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     int16_t speed = 0;
 
-    static bool already_played_fin = 0;
+    static bool already_played_fin = FALSE;
 
     while(1){
         time = chVTGetSystemTime();
 
         //computes the speed to give to the motors
-        //distance_cm is modified by the image processing thread
         speed = pi_regulator(get_phase_dif());
 
-        //controle_front_pi = get_controle_front();
 
        if (get_detection_fin())
             {
-            	left_motor_set_speed(0);
-            	right_motor_set_speed(0);
+            	left_motor_set_speed(NO_SPEED);
+            	right_motor_set_speed(NO_SPEED);
 
             	if (!already_played_fin)
             	{
-            		playMelody(7, ML_FORCE_CHANGE, NULL);
-            		already_played_fin = 1;
+            		playMelody(MARIO_FLAG, ML_FORCE_CHANGE, NULL);
+            		already_played_fin = TRUE;
             	}
             }
 
@@ -84,7 +82,6 @@ static THD_FUNCTION(PiRegulator, arg) {
 
 			else
 			{
-				//applies the speed from the PI regulator and the correction for the rotation
 				right_motor_set_speed(MOTOR_SPEED_LIMIT/4 + speed);
 				left_motor_set_speed(MOTOR_SPEED_LIMIT/4 -speed);
 			}
