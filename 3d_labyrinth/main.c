@@ -51,10 +51,6 @@ static bool controle_back = 0;
 static bool detection_fin = 0;
 
 
-#define NOMBRE_LED_RGB				4
-#define SEUIL_DETECTION_FIN			250
-#define SEUIL_PROXI_FB				250
-#define SEUIL_PROXI_LATERAL			200
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
 messagebus_t bus;
@@ -280,11 +276,10 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
     systime_t time;
     static int init_ambient[PROXIMITY_NB_CHANNELS];
-    static bool init_in_process = true;
+    static bool init_in_process = TRUE;
 
     static int16_t sum = 0;
 
-    static bool envoie = true;
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
@@ -304,7 +299,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     				init_ambient[j]=prox_values.ambient[j];
     			}
 
-    			init_in_process = false;
+    			init_in_process = FALSE;
     	}
 
 
@@ -330,81 +325,74 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 */
 
     	for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
+    	{
+    		set_rgb_led(i, 0, 0, 0);
+    	}
+
+
+    	for(uint8_t k = 0 ; k < PROXIMITY_NB_CHANNELS; k++)
+    	{
+    		sum =+	init_ambient[k]-prox_values.ambient[k];
+    	}
+
+
+
+    	if (sum >=SEUIL_DETECTION_FIN)
+    	{
+    		for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
     		{
-    			set_rgb_led(i, 0, 0, 0);
+    			set_rgb_led(i, 10,5 , 2);
     		}
 
+    		detection_fin = TRUE;
+    	}
+
+    	sum = 0;
+
+
+		if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL) /// MAG C NUMBER
+		{
+			set_rgb_led(0, 10,10 , 0);
+			set_rgb_led(3, 10,10 , 0);
+			controle_front = TRUE ;
+		}
+
+		else if (abs(prox_values.delta[0])<SEUIL_PROXI_FB && abs(prox_values.delta[7])<SEUIL_PROXI_FB && abs(prox_values.delta[6])<SEUIL_PROXI_LATERAL && abs(prox_values.delta[1])<SEUIL_PROXI_LATERAL)
+		{
+			controle_front = FALSE;
+		}
+
+
+		if (abs(prox_values.delta[2])>SEUIL_PROXI_LATERAL)
+		{
+			set_rgb_led(0, 10,10 , 0);
+			set_rgb_led(1, 10,10 , 0);
+		}
 
 
 
 
+		if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
+		{
+			set_rgb_led(1, 10,10 , 0);
+			set_rgb_led(2, 10,10 , 0);
+			controle_back = TRUE ;
+		}
 
 
+		else if (abs(prox_values.delta[3])<SEUIL_PROXI_FB && abs(prox_values.delta[4])<SEUIL_PROXI_FB)
+		{
+			controle_back = FALSE;
+		}
 
 
+		if (abs(prox_values.delta[5])>SEUIL_PROXI_LATERAL)
+		{
+			set_rgb_led(2, 10,10 , 0);
+			set_rgb_led(3, 10,10 , 0);
+		}
 
-    			for(uint8_t k = 0 ; k < PROXIMITY_NB_CHANNELS; k++)
-    			{
-    				sum =+	init_ambient[k]-prox_values.ambient[k];
-    			}
-
-
-
-    			if (sum >=SEUIL_DETECTION_FIN)
-    			{
-    				for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
-    				{
-    					set_rgb_led(i, 10,5 , 2);
-    				}
-    				detection_fin = true;
-    			}
-
-    			sum = 0;
-
-
-				if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL) /// MAG C NUMBER
-				{
-					set_rgb_led(0, 10,10 , 0);
-					set_rgb_led(3, 10,10 , 0);
-					controle_front = true ;
-				}
-
-				else if (abs(prox_values.delta[0])<SEUIL_PROXI_FB && abs(prox_values.delta[7])<SEUIL_PROXI_FB && abs(prox_values.delta[6])<SEUIL_PROXI_LATERAL && abs(prox_values.delta[1])<SEUIL_PROXI_LATERAL)
-				{
-					controle_front = false;
-				}
-
-
-				if (abs(prox_values.delta[2])>SEUIL_PROXI_LATERAL)
-				{
-					set_rgb_led(0, 10,10 , 0);
-					set_rgb_led(1, 10,10 , 0);
-				}
-
-
-
-
-				if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
-				{
-					set_rgb_led(1, 10,10 , 0);
-					set_rgb_led(2, 10,10 , 0);
-					controle_back = true ;
-				}
-
-
-				else if (abs(prox_values.delta[3])<SEUIL_PROXI_FB && abs(prox_values.delta[4])<SEUIL_PROXI_FB)
-				{
-					controle_back = false;
-				}
-
-
-				if (abs(prox_values.delta[5])>SEUIL_PROXI_LATERAL)
-				{
-					set_rgb_led(2, 10,10 , 0);
-					set_rgb_led(3, 10,10 , 0);
-				}
-
-		        chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
+		chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
 
 
 
@@ -431,7 +419,7 @@ static THD_FUNCTION(controle_thd, arg)
 
     	if(!detection_fin)
     	{
-
+    		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL);
     	}
 
     	show_gravity(&imu_values);

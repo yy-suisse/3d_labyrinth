@@ -11,6 +11,11 @@ extern "C" {
 
 enum ETAT {MODE_IMU, MODE_SON};
 
+#define NOMBRE_LED_RGB				4
+#define SEUIL_DETECTION_FIN			250
+#define SEUIL_PROXI_FB				250
+#define SEUIL_PROXI_LATERAL			200
+
 #define TRESHOLD_IMU 				0.4
 #define NB_VALEUR_FILTRE            8
 #define VITESSE_BASE 				150
