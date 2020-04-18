@@ -14,7 +14,7 @@
 #include "epuck1x/Asercom.h"
 #include "epuck1x/Asercom2.h"
 #include "epuck1x/a_d/advance_ad_scan/e_acc.h"
-#include "sensors/battery_level.h"
+//#include "sensors/battery_level.h"
 #include "sensors/imu.h"
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
@@ -419,7 +419,7 @@ int main(void)
 	usb_start();
 	motors_init();
 	proximity_start();
-	battery_level_start();
+	//battery_level_start();
 	dac_start();
 	exti_start();
 	spi_comm_start();
