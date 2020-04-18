@@ -314,20 +314,39 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
     	sum = 0;
 
+    	// blocage si capteurs avant detectent un obstacle et que l'on souhaite avancer (mode imu)
+    	if (get_selector()%2 == MODE_IMU)
+    	{
+			if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB)
+			{
+				set_rgb_led(0, 10,10 , 0);
+				set_rgb_led(3, 10,10 , 0);
+				controle_front = TRUE ;
+			}
 
-		if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL) /// MAG C NUMBER
-		{
-			set_rgb_led(0, 10,10 , 0);
-			set_rgb_led(3, 10,10 , 0);
-			controle_front = TRUE ;
-		}
+			else
+			{
+				controle_front = FALSE;
+			}
+    	}
 
-		else if (abs(prox_values.delta[0])<SEUIL_PROXI_FB && abs(prox_values.delta[7])<SEUIL_PROXI_FB && abs(prox_values.delta[6])<SEUIL_PROXI_LATERAL && abs(prox_values.delta[1])<SEUIL_PROXI_LATERAL)
-		{
-			controle_front = FALSE;
-		}
+		// blocage si on est en mode son et que capteurs avant ou avant lateraux detectent un obstacle et que l'on souhaite avancer
+    	if (get_selector()%2 == MODE_SON)
+    	{
+			if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL)
+			{
+				set_rgb_led(0, 10,10 , 0);
+				set_rgb_led(3, 10,10 , 0);
+				controle_front = TRUE ;
+			}
 
+			else
+			{
+				controle_front = FALSE;
+			}
+    	}
 
+		// leds coté droit on si capteur droite detecte obstacle
 		if (abs(prox_values.delta[2])>SEUIL_PROXI_LATERAL)
 		{
 			set_rgb_led(0, 10,10 , 0);
@@ -336,21 +355,24 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-
-		if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
+		// blocage si capteurs arriere detectent un obstacle et que l'on souhaite reculer ( mode imu)
+		if (get_selector()%2 == MODE_IMU)
 		{
-			set_rgb_led(1, 10,10 , 0);
-			set_rgb_led(2, 10,10 , 0);
-			controle_back = TRUE ;
+			if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
+			{
+				set_rgb_led(1, 10,10 , 0);
+				set_rgb_led(2, 10,10 , 0);
+				controle_back = TRUE ;
+			}
+
+
+			else
+			{
+				controle_back = FALSE;
+			}
 		}
 
-
-		else if (abs(prox_values.delta[3])<SEUIL_PROXI_FB && abs(prox_values.delta[4])<SEUIL_PROXI_FB)
-		{
-			controle_back = FALSE;
-		}
-
-
+		// leds coté gauche on si capteur gauche detecte un obstacle
 		if (abs(prox_values.delta[5])>SEUIL_PROXI_LATERAL)
 		{
 			set_rgb_led(2, 10,10 , 0);
@@ -358,8 +380,6 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 		}
 
 		chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
-
-
 
     }
 }
