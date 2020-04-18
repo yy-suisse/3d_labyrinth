@@ -11,15 +11,16 @@
 #include "audio/audio_thread.h"
 #include "audio/play_melody.h"
 #include "audio/microphone.h"
-#include "epuck1x/a_d/advance_ad_scan/e_acc.h"/////
+
 #include "sensors/imu.h"
-#include "sensors/mpu9250.h"/////
 #include "sensors/proximity.h"
-#include "i2c_bus.h"
+
 #include "leds.h"
 #include "motors.h"
 #include "selector.h"
 #include "spi_comm.h"
+
+#include "i2c_bus.h"
 #include "usbcfg.h"
 
 #include <main.h>
