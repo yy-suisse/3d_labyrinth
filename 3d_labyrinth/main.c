@@ -14,13 +14,11 @@
 #include "epuck1x/Asercom.h"
 #include "epuck1x/Asercom2.h"
 #include "epuck1x/a_d/advance_ad_scan/e_acc.h"
-//#include "sensors/battery_level.h"
 #include "sensors/imu.h"
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
-#include "exti.h"
 #include "i2c_bus.h"
 #include "leds.h"
 #include <main.h>
@@ -416,12 +414,10 @@ int main(void)
 	clear_leds();
 	set_body_led(0);
 	set_front_led(0);
-	usb_start();
+	usb_start();// led orange que pour imu -> voir assistant
 	motors_init();
 	proximity_start();
-	//battery_level_start();
-	dac_start();
-	exti_start();
+	dac_start(); // kernel panic si on enleve
 	spi_comm_start();
 	sdio_start();
 	playMelodyStart();
