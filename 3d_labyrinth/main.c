@@ -4,33 +4,25 @@
 #include <math.h>
 
 #include "ch.h"
-#include "chprintf.h"
 #include "hal.h"
-#include "shell.h"
+#include "memory_protection.h"
+//#include "chprintf.h"
 
 #include "audio/audio_thread.h"
 #include "audio/play_melody.h"
 #include "audio/microphone.h"
-#include "epuck1x/Asercom.h"
-#include "epuck1x/Asercom2.h"
-#include "epuck1x/a_d/advance_ad_scan/e_acc.h"
+#include "epuck1x/a_d/advance_ad_scan/e_acc.h"/////
 #include "sensors/imu.h"
-#include "sensors/mpu9250.h"
+#include "sensors/mpu9250.h"/////
 #include "sensors/proximity.h"
-#include "cmd.h"
-#include "config_flash_storage.h"
 #include "i2c_bus.h"
 #include "leds.h"
-#include <main.h>
-#include "memory_protection.h"
 #include "motors.h"
-#include "sdio.h"
 #include "selector.h"
 #include "spi_comm.h"
 #include "usbcfg.h"
-#include "communication.h"
-#include "uc_usage.h"
 
+#include <main.h>
 #include <audio_processing.h>
 #include <pi_regulator.h>
 #include <fft.h>
@@ -419,7 +411,6 @@ int main(void)
 	proximity_start();
 	dac_start(); // kernel panic si on enleve
 	spi_comm_start();
-	sdio_start();
 	playMelodyStart();
 
 	if(get_selector()%2 == MODE_IMU)
