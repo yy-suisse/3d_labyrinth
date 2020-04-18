@@ -18,7 +18,6 @@
 #include "sensors/imu.h"
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
-#include "ir_remote.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
 #include "exti.h"
@@ -420,7 +419,6 @@ int main(void)
 	usb_start();
 	motors_init();
 	proximity_start();
-	ir_remote_start();
 	battery_level_start();
 	dac_start();
 	exti_start();
