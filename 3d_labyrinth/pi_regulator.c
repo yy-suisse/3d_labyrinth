@@ -6,7 +6,6 @@
 #include "ch.h"
 #include "hal.h"
 #include "memory_protection.h"
-//#include "chprintf.h"
 
 #include "audio/audio_thread.h"
 #include "audio/play_melody.h"
@@ -26,8 +25,7 @@
 #include <main.h>
 #include <audio_processing.h>
 #include <pi_regulator.h>
-#include <fft.h>
-#include <arm_math.h>
+#include <arm_math.h>////////
 
 static bool controle_front = 0;
 static bool controle_back = 0;

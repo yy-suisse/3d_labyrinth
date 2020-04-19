@@ -7,9 +7,8 @@
 #include <motors.h>
 #include <audio/microphone.h>
 #include <audio_processing.h>
-//#include <communications.h>
-#include <fft.h>
 #include <arm_math.h>
+#include <arm_const_structs.h>
 
 
 //2 times FFT_SIZE because these arrays contain complex numbers (real + imaginary)
@@ -132,8 +131,10 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		*	This is an "In Place" function. 
 		*/
 
-		doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
-		doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
+		arm_cfft_f32(&arm_cfft_sR_f32_len1024, micRight_cmplx_input, 0, 1);
+		arm_cfft_f32(&arm_cfft_sR_f32_len1024, micLeft_cmplx_input, 0, 1);
+		//doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
+		//doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
 
 
 		/*	Magnitude processing
