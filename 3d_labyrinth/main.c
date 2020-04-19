@@ -29,14 +29,24 @@
 #include <fft.h>
 #include <arm_math.h>
 
+static bool mode_selector = 0;
 
-#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)///////////////////////////////////
+
+//#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)///////////////////////////////////
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
 
 parameter_namespace_t parameter_root;
+
+
+
+bool get_mode_selector (void)
+{
+	return mode_selector;
+}
+
 
 
 int main(void)
@@ -64,13 +74,15 @@ int main(void)
 
 	prox_analyse_start();
 
-	if(get_selector()%2 == MODE_IMU)
+	mode_selector = get_selector()%2;
+
+	if(mode_selector == MODE_IMU)
 	{
 		imu_start();
 		controle_imu_start();
 	}
 
-	if (get_selector()%2 == MODE_SON)
+	if (mode_selector == MODE_SON)
 	{
 		mic_start(&processAudioData);
 		controle_son_start();
@@ -82,6 +94,8 @@ int main(void)
         chThdSleepMilliseconds(1000);
     }
 }
+
+
 
 #define STACK_CHK_GUARD 0xe2dee396
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;

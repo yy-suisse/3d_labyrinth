@@ -11,6 +11,7 @@ extern "C" {
 
 enum ETAT {MODE_IMU, MODE_SON};
 
+bool get_mode_selector (void);
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

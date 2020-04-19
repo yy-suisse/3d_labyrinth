@@ -47,6 +47,10 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
     static int16_t sum = 0;
 
+    static bool mode = 0;
+
+    mode = get_mode_selector();
+
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
@@ -58,6 +62,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     	time = chVTGetSystemTime();
 
     	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
+
 
     	if(init_in_process)
     	{
@@ -117,7 +122,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     	sum = 0;
 
     	// blocage si capteurs avant detectent un obstacle et que l'on souhaite avancer (mode imu)
-    	if (get_selector()%2 == MODE_IMU)
+    	if (mode == MODE_IMU)
     	{
 			if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB)
 			{
@@ -133,7 +138,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     	}
 
 		// blocage si on est en mode son et que capteurs avant ou avant lateraux detectent un obstacle et que l'on souhaite avancer
-    	if (get_selector()%2 == MODE_SON)
+    	if (mode == MODE_SON)
     	{
 			if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL)
 			{
@@ -158,7 +163,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 		// blocage si capteurs arriere detectent un obstacle et que l'on souhaite reculer ( mode imu)
-		if (get_selector()%2 == MODE_IMU)
+		if (mode == MODE_IMU)
 		{
 			if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
 			{
