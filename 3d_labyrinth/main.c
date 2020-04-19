@@ -73,7 +73,7 @@ int main(void)
 	if (get_selector()%2 == MODE_SON)
 	{
 		mic_start(&processAudioData);
-		pi_regulator_start();
+		controle_son_start();
 	}
 
 

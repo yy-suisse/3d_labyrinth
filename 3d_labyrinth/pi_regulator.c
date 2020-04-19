@@ -364,9 +364,9 @@ void show_gravity(imu_msg_t *imu_values)
 }
 
 
-static THD_WORKING_AREA(controle_thd_wa, 2048);
+static THD_WORKING_AREA(controle_imu_thd_wa, 2048);
 
-static THD_FUNCTION(controle_thd, arg)
+static THD_FUNCTION(controle_imu_thd, arg)
 {
     (void) arg;
     chRegSetThreadName(__FUNCTION__);
@@ -393,18 +393,6 @@ static THD_FUNCTION(controle_thd, arg)
     }
 }
 
-
-
-bool get_controle_front(void)
-{
-	return controle_front;
-}
-
-
-bool get_detection_fin(void)
-{
-	return detection_fin;
-}
 
 //simple PI regulator implementation
 int16_t pi_regulator(float error){
@@ -434,9 +422,9 @@ int16_t pi_regulator(float error){
 }
 
 
-static THD_WORKING_AREA(waPiRegulator, 256);
+static THD_WORKING_AREA(controle_son_thd_wa, 256);
 
-static THD_FUNCTION(PiRegulator, arg) {
+static THD_FUNCTION(controle_son_thd, arg) {
 
     chRegSetThreadName(__FUNCTION__);
     (void)arg;
@@ -454,7 +442,7 @@ static THD_FUNCTION(PiRegulator, arg) {
         speed = pi_regulator(get_phase_dif());
 
 
-       if (get_detection_fin())
+       if (detection_fin)
             {
             	left_motor_set_speed(NO_SPEED);
             	right_motor_set_speed(NO_SPEED);
@@ -467,9 +455,9 @@ static THD_FUNCTION(PiRegulator, arg) {
             }
 
 
-       else if(!get_detection_fin())
+       else if(!detection_fin)
        {
-			if (get_controle_front())
+			if (controle_front)
 			{
 				right_motor_set_speed(speed);
 				left_motor_set_speed(-speed);
@@ -488,10 +476,6 @@ static THD_FUNCTION(PiRegulator, arg) {
     }
 }
 
-void pi_regulator_start(void)
-{
-	chThdCreateStatic(waPiRegulator, sizeof(waPiRegulator), NORMALPRIO, PiRegulator, NULL);////////////////modifier nom controle son
-}
 
 void prox_analyse_start(void)
 {
@@ -500,5 +484,10 @@ void prox_analyse_start(void)
 
 void controle_imu_start(void)
 {
-	chThdCreateStatic(controle_thd_wa, sizeof(controle_thd_wa), NORMALPRIO, controle_thd, NULL);
+	chThdCreateStatic(controle_imu_thd_wa, sizeof(controle_imu_thd_wa), NORMALPRIO, controle_imu_thd, NULL);
+}
+
+void controle_son_start(void)
+{
+	chThdCreateStatic(controle_son_thd_wa, sizeof(controle_son_thd_wa), NORMALPRIO, controle_son_thd, NULL);
 }
