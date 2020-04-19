@@ -75,27 +75,6 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     	}
 
 
-			/* // Read proximity sensors.
-
-				chprintf((BaseSequentialStream *)&SDU1, "LED 1 value is : %4d,\n"  ,prox_values.delta[0]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 2 value is : %4d,\n"  ,prox_values.delta[1]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 3 value is : %4d,\n"  ,prox_values.delta[2]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 4 value is : %4d,\n"  ,prox_values.delta[3]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 5 value is : %4d,\n"  ,prox_values.delta[4]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 6 value is : %4d,\n"  ,prox_values.delta[5]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 7 value is : %4d,\n"  ,prox_values.delta[6]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-				chprintf((BaseSequentialStream *)&SDU1, "LED 8 value is : %4d,\n"  ,prox_values.delta[7]);
-	        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-
-*/
-
     	for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
     	{
     		set_rgb_led(i, 0, 0, 0);
