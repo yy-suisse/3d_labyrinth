@@ -23,9 +23,9 @@
 #include "usbcfg.h"
 
 #include <main.h>
+#include <controle.h>
 #include <audio_processing.h>
-#include <pi_regulator.h>
-#include <arm_math.h>////////
+//#include <arm_math.h>////////
 
 static bool controle_front = 0;
 static bool controle_back = 0;

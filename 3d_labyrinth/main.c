@@ -24,8 +24,8 @@
 
 #include <main.h>
 #include <audio_processing.h>
-#include <pi_regulator.h>
 #include <arm_math.h>
+#include <controle.h>
 
 static bool mode_selector = 0;
 
