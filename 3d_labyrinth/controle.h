@@ -17,13 +17,22 @@
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
 
-// start the proximity analyse thread
+ /*
+ * @brief   start the proximity analyse thread
+ */
 void prox_analyse_start(void);
 
-// start the imu control thread
+
+/*
+* @brief   start the imu control thread
+*/
 void controle_imu_start(void);
 
-//start the sound control thread
+
+
+/*
+* @brief   start the sound control thread
+*/
 void controle_son_start(void);
 
 #endif /* PI_REGULATOR_H */

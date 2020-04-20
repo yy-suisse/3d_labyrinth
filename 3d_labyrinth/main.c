@@ -27,6 +27,7 @@
 #include <arm_math.h>
 #include <controle.h>
 
+
 static bool mode_selector = 0;
 
 
@@ -68,16 +69,21 @@ int main(void)
 	spi_comm_start();
 	playMelodyStart();
 
+	// Init the proximity sensor analyze
 	prox_analyse_start();
 
+	// Read the state of control mode chosen by selector
 	mode_selector = get_selector()%2;
 
+
+	// Init for IMU control
 	if(mode_selector == MODE_IMU)
 	{
 		imu_start();
 		controle_imu_start();
 	}
 
+	// Init for sound control
 	if (mode_selector == MODE_SON)
 	{
 		mic_start(&processAudioData);

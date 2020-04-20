@@ -19,9 +19,12 @@ static float micRight_cmplx_input[2 * FFT_SIZE];
 static float micLeft_output[FFT_SIZE];
 static float micRight_output[FFT_SIZE];
 
+// last 2 values of phase difference
 static float phase_dif = 0;
 static float phase_dif_old = 0;
 
+
+// coefficient of filter, weight of old value and new value
 #define FILTRE_COEF 				 0.3
 #define FILTRE_VALEUR_ABERRANTE      0.5
 
@@ -30,9 +33,11 @@ static float phase_dif_old = 0;
 
 
 /*
-*	Simple function used to detect the highest value in a buffer
-*	and to execute a motor command depending on it
+*	function used to detect the highest value in a buffer
+*	and calculate the difference of phase with filter
 */
+
+/***************************INTERNAL FUNCTIONS************************************/
 void sound_remote(float* data1, float* data2){
 
 	float phase1 = 0;
@@ -61,17 +66,24 @@ void sound_remote(float* data1, float* data2){
 		}
 	}
 
+
+
+	/* since 2 microphones receive the same sound, if the frequencies of peak value in 2 data arrays are the same,
+	 * then the source is correct to calculate phase difference
+	 */
 	if (max_norm_index1 == max_norm_index2)
 	{
-		// atan2f (x,y) renvoie arctan (x/y) dans -pi pi
+		// atan2f (x,y) returns arctan (x/y) within -pi pi
 		phase1 = atan2f(micLeft_cmplx_input[2*max_norm_index1+1], micLeft_cmplx_input[2*max_norm_index1]);
 		phase2 = atan2f(micRight_cmplx_input[2*max_norm_index2+1], micRight_cmplx_input[2*max_norm_index2]);
 
+		// filter to make modifications of phase difference continuous
 		phase_dif = (1-FILTRE_COEF)*(phase1 - phase2) + FILTRE_COEF*phase_dif_old;
 
 
 
 
+		// update phase difference value for the further measurement
 		if (phase_dif > -FILTRE_VALEUR_ABERRANTE && phase_dif < FILTRE_VALEUR_ABERRANTE)
 		{
 			phase_dif_old = phase_dif;
@@ -79,6 +91,11 @@ void sound_remote(float* data1, float* data2){
 
 	}
 }
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
 
 /*
 *	Callback called when the demodulation of the four microphones is done.
@@ -133,8 +150,7 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 
 		arm_cfft_f32(&arm_cfft_sR_f32_len1024, micRight_cmplx_input, 0, 1);
 		arm_cfft_f32(&arm_cfft_sR_f32_len1024, micLeft_cmplx_input, 0, 1);
-		//doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
-		//doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
+
 
 
 		/*	Magnitude processing
@@ -164,3 +180,5 @@ float get_phase_dif(void){
 
 	else return phase_dif_old;
 }
+
+/**************************END PUBLIC FUNCTIONS***********************************/
