@@ -26,6 +26,9 @@
 #include <controle.h>
 #include <audio_processing.h>
 
+static thread_t *controle_imu;
+static thread_t *controle_son;
+static thread_t *prox_analyse;
 
 // 3 control flags which help to decide movement or event
 static bool controle_front = 0;
@@ -184,10 +187,10 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 }
 
 /**
- * @brief   fonction reads IMU datas then analyzes which direction it should go. In case that no obstable is present,
+ * @brief   function reads IMU datas then analyzes which direction it should go. In case that no obstacle is present,
  * 			robot goes in the direction given by accelerometer.
- * 			In case that obstable is present, robots stop moving and plays melody until player choose another move direction
- * 			where is no obstacle.
+ * 			In case that obstacle is present, robots stop moving and plays melody until player choose another move direction
+ * 			where there is no obstacle.
  * 			In case of end of mission, robot doesn't move anymore and play melody for once.
  *
  * @param   data from accelerometer
@@ -377,7 +380,7 @@ void show_gravity(imu_msg_t *imu_values)
 
 /**
  * @brief	Thread for getting data from accelerometer, in case of end of mission, robot doesn't move
- * 			anymore and play endinf melody.
+ * 			anymore and play ending melody.
  */
 
 
@@ -488,14 +491,14 @@ static THD_FUNCTION(controle_son_thd, arg) {
 
        else if(!detection_fin) //if mission is in process
        {
-			if (controle_front) //if obstable is present in front of robot, no movement
+			if (controle_front) //if obstable is present in front of robot, only rotation
 			{
 				right_motor_set_speed(speed);
 				left_motor_set_speed(-speed);
 			}
 
 
-			else   // if no obstacle is present  i  front of robot, robot can move forward in rotating forward to the sound source
+			else   // if no obstacle is present  in  front of robot, robot can move forward and rotate forward to the sound source
 			{
 				right_motor_set_speed(MOTOR_SPEED_LIMIT/4 + speed);
 				left_motor_set_speed(MOTOR_SPEED_LIMIT/4 -speed);
@@ -514,17 +517,43 @@ static THD_FUNCTION(controle_son_thd, arg) {
 
 void prox_analyse_start(void)
 {
-	chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
+	prox_analyse = chThdCreateStatic(prox_analyse_thd_wa, sizeof(prox_analyse_thd_wa), NORMALPRIO, prox_analyse_thd, NULL);
 }
 
 void controle_imu_start(void)
 {
-	chThdCreateStatic(controle_imu_thd_wa, sizeof(controle_imu_thd_wa), NORMALPRIO, controle_imu_thd, NULL);
+	controle_imu = chThdCreateStatic(controle_imu_thd_wa, sizeof(controle_imu_thd_wa), NORMALPRIO, controle_imu_thd, NULL);
 }
 
 void controle_son_start(void)
 {
-	chThdCreateStatic(controle_son_thd_wa, sizeof(controle_son_thd_wa), NORMALPRIO, controle_son_thd, NULL);
+	controle_son = chThdCreateStatic(controle_son_thd_wa, sizeof(controle_son_thd_wa), NORMALPRIO, controle_son_thd, NULL);
+}
+
+void prox_analyse_stop(void)
+{
+	chThdTerminate(prox_analyse);
+	chThdWait(prox_analyse);
+	prox_analyse = NULL;
+}
+
+void controle_imu_stop(void)
+{
+	chThdTerminate(controle_imu);
+	chThdWait(controle_imu);
+	controle_imu = NULL;
+}
+
+void controle_son_stop(void)
+{
+	chThdTerminate(controle_son);
+	chThdWait(controle_son);
+	controle_son = NULL;
+}
+
+bool get_detection_fin(void)
+{
+	return detection_fin;
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

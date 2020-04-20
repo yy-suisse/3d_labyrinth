@@ -1,5 +1,5 @@
-#ifndef PI_REGULATOR_H
-#define PI_REGULATOR_H
+#ifndef CONTROLE_H
+#define CONTROLE_H
 
 #define NOMBRE_LED_RGB				4
 #define SEUIL_DETECTION_FIN			250
@@ -35,4 +35,17 @@ void controle_imu_start(void);
 */
 void controle_son_start(void);
 
-#endif /* PI_REGULATOR_H */
+
+void prox_analyse_stop(void);
+
+
+void controle_imu_stop(void);
+
+
+void controle_son_stop(void);
+
+
+bool get_detection_fin(void);
+
+
+#endif /* CONTROLE_H */

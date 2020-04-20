@@ -24,7 +24,7 @@ static float phase_dif = 0;
 static float phase_dif_old = 0;
 
 
-// coefficient of filter, weight of old value and new value
+// coefficients of filters
 #define FILTRE_COEF 				 0.3
 #define FILTRE_VALEUR_ABERRANTE      0.5
 
@@ -32,12 +32,14 @@ static float phase_dif_old = 0;
 #define MIN_VALUE_THRESHOLD	10000 
 
 
-/*
-*	function used to detect the highest value in a buffer
-*	and calculate the difference of phase with filter
-*/
 
 /***************************INTERNAL FUNCTIONS************************************/
+
+
+/*
+*	function used to detect the highest value in a buffer
+*	and calculate a filtered difference of phase
+*/
 void sound_remote(float* data1, float* data2){
 
 	float phase1 = 0;
@@ -77,7 +79,7 @@ void sound_remote(float* data1, float* data2){
 		phase1 = atan2f(micLeft_cmplx_input[2*max_norm_index1+1], micLeft_cmplx_input[2*max_norm_index1]);
 		phase2 = atan2f(micRight_cmplx_input[2*max_norm_index2+1], micRight_cmplx_input[2*max_norm_index2]);
 
-		// filter to make modifications of phase difference continuous
+		// filter to make modifications of phase difference more continuous
 		phase_dif = (1-FILTRE_COEF)*(phase1 - phase2) + FILTRE_COEF*phase_dif_old;
 
 
