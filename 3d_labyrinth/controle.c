@@ -41,6 +41,7 @@ static bool detection_fin = 0;
 /**
 * @brief   Thread which analyzes the distances of 8 proximity sensors to decide the movement
 * 		   analyze the ambient light for the detection of End
+* 		   change states of leds depending the distance between captors and obstacles
 */
 
 static THD_WORKING_AREA(prox_analyse_thd_wa, 2048);
@@ -67,11 +68,12 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     calibrate_ir();
 
 
-    while(chThdShouldTerminateX() == false) {
+    while(chThdShouldTerminateX() == false)
+    {
     	time = chVTGetSystemTime();
 
+    	//wait for new measures to be published
     	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
-
 
     	// initialize the ambient light once at the beginning, it helps to determine the end of the game
     	if(init_in_process)
@@ -212,11 +214,12 @@ void show_gravity(imu_msg_t *imu_values)
     static uint8_t boucle = 0;
     float acceleration_average = 0;
 
+    // in order to play the music once
     static bool already_played = FALSE;
     static bool already_played_fin = FALSE;
 
 
-    //fill the array of aceeleration datas
+    //fill the array of acceleration datas
     tab_average[boucle] = fabs(accel[Y_AXIS]);
     boucle++;
 
@@ -226,7 +229,7 @@ void show_gravity(imu_msg_t *imu_values)
     }
 
 
-    // caculate average of acceleration
+    // calculate average of acceleration
     for(uint8_t i = 0; i < NB_VALEUR_FILTRE ; i++)
     {
     	acceleration_average += tab_average[i];
@@ -291,7 +294,7 @@ void show_gravity(imu_msg_t *imu_values)
 						left_motor_set_speed(NO_SPEED);
 						right_motor_set_speed(NO_SPEED);
 
-						if (!already_played) // stop misic can only played once
+						if (!already_played) // stop music can only played once
 						{
 							playMelody(MARIO_DEATH, ML_FORCE_CHANGE, NULL);
 							already_played = TRUE;
@@ -342,7 +345,7 @@ void show_gravity(imu_msg_t *imu_values)
 				}
 			}
 
-			// in case that acceleromater vaues are smaller than noise signal
+			// in case that accelerometer values are smaller than noise signal
 			else
 			{
 				left_motor_set_speed(NO_SPEED);
@@ -366,7 +369,7 @@ void show_gravity(imu_msg_t *imu_values)
     	left_motor_set_speed(NO_SPEED);
     	right_motor_set_speed(NO_SPEED);
 
-    	if (!already_played_fin) // endinf music can only be played once
+    	if (!already_played_fin) // ending music can only be played once
     	{
     		playMelody(MARIO_FLAG, ML_FORCE_CHANGE, NULL);
     		already_played_fin = TRUE;
@@ -467,9 +470,11 @@ static THD_FUNCTION(controle_son_thd, arg) {
 
     int16_t speed = 0;
 
+    // music can only be played once
     static bool already_played_fin = FALSE;
 
-    while(chThdShouldTerminateX() == false){
+    while(chThdShouldTerminateX() == false)
+    {
         time = chVTGetSystemTime();
 
         //computes the speed to give to the motors
