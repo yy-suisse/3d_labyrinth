@@ -36,15 +36,31 @@ void controle_imu_start(void);
 void controle_son_start(void);
 
 
+/*
+* @brief   stop the proximity analyse thread and his LED activities at the end of mission
+*/
 void prox_analyse_stop(void);
 
 
+/*
+* @brief  stop the imu control thread at the end of mission
+*/
 void controle_imu_stop(void);
 
 
+/*
+* @brief   stop the sound control thread at the end of mission
+*/
 void controle_son_stop(void);
 
 
+/*
+* @brief   send the analyse result about if mission is finished
+*
+* @return  boolien
+* 		   mission is finished: 1
+* 		   missoin is not finished yet: 0
+*/
 bool get_detection_fin(void);
 
 
