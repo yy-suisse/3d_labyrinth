@@ -2,9 +2,8 @@
 #include "hal.h"
 #include <main.h>
 #include <usbcfg.h>
-#include <chprintf.h>
 
-#include <motors.h>
+
 #include <audio/microphone.h>
 #include <audio_processing.h>
 #include <arm_math.h>
@@ -28,7 +27,7 @@ static float phase_dif_old = 0;
 #define FILTRE_COEF 				 0.3
 #define FILTRE_VALEUR_ABERRANTE      0.5
 
-
+// threshold in order to avoid to detect noise as a maximum of magnitude
 #define MIN_VALUE_THRESHOLD	10000 
 
 
@@ -40,7 +39,8 @@ static float phase_dif_old = 0;
 *	function used to detect the highest value in a buffer
 *	and calculate a filtered difference of phase
 */
-void sound_remote(float* data1, float* data2){
+void sound_remote(float* data1, float* data2)
+{
 
 	float phase1 = 0;
 	float phase2 = 0;
@@ -53,16 +53,20 @@ void sound_remote(float* data1, float* data2){
 
 
 	//search for the highest peak in data1
-	for(uint16_t i = 0 ; i <= FFT_SIZE/2 ; i++){
-		if(data1[i] > max_norm1){
+	for(uint16_t i = 0 ; i <= FFT_SIZE/2 ; i++)
+	{
+		if(data1[i] > max_norm1)
+		{
 			max_norm1 = data1[i];
 			max_norm_index1 = i;
 		}
 	}
 
 	//search for the highest peak in data2
-	for(uint16_t j = 0 ; j <= FFT_SIZE/2 ; j++){
-		if(data2[j] > max_norm2){
+	for(uint16_t j = 0 ; j <= FFT_SIZE/2 ; j++)
+	{
+		if(data2[j] > max_norm2)
+		{
 			max_norm2 = data2[j];
 			max_norm_index2 = j;
 		}
@@ -108,7 +112,8 @@ void sound_remote(float* data1, float* data2){
 *							so we have [micRight1, micLeft1, micBack1, micFront1, micRight2, etc...]
 *	uint16_t num_samples	Tells how many data we get in total (should always be 640)
 */
-void processAudioData(int16_t *data, uint16_t num_samples){
+void processAudioData(int16_t *data, uint16_t num_samples)
+{
 
 	/*
 	*
@@ -123,7 +128,8 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 
 
 	//loop to fill the buffers
-	for(uint16_t i = 0 ; i < num_samples ; i+=4){
+	for(uint16_t i = 0 ; i < num_samples ; i+=4)
+	{
 		//construct an array of complex numbers. Put 0 to the imaginary part
 		micRight_cmplx_input[nb_samples] = (float)data[i + MIC_RIGHT];
 		micLeft_cmplx_input[nb_samples] = (float)data[i + MIC_LEFT];
@@ -143,8 +149,9 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 
 
 
-	if(nb_samples >= (2 * FFT_SIZE)){
-		/*	FFT proccessing
+	if(nb_samples >= (2 * FFT_SIZE))
+	{
+		/*	FFT processing
 		*
 		*	This FFT function stores the results in the input buffer given.
 		*	This is an "In Place" function. 
@@ -173,7 +180,8 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 }
 
 
-float get_phase_dif(void){
+float get_phase_dif(void)
+{
 
 	if (phase_dif > -FILTRE_VALEUR_ABERRANTE && phase_dif < FILTRE_VALEUR_ABERRANTE)
 	{

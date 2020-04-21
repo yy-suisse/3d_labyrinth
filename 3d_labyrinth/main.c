@@ -24,7 +24,6 @@
 
 #include <main.h>
 #include <audio_processing.h>
-#include <arm_math.h>
 #include <controle.h>
 
 
@@ -34,8 +33,6 @@ static bool mode_selector = 0;
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
-
-parameter_namespace_t parameter_root;/////////////////////
 
 
 
@@ -56,7 +53,6 @@ int main(void)
     /** Inits the Inter Process Communication bus. */
     messagebus_init(&bus, &bus_lock, &bus_condvar);
 
-    parameter_namespace_declare(&parameter_root, NULL, NULL);///////////////////////////////
 
     // Init the peripherals.
 	clear_leds();

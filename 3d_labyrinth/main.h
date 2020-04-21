@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-#include "camera/dcmi_camera.h"///////////////
-#include "msgbus/messagebus.h"///////////////
-#include "parameter/parameter.h"//////////////////
+#include "camera/dcmi_camera.h"
+#include "msgbus/messagebus.h"
+#include "parameter/parameter.h"
 
 
 /** enumeration for 2 states of control:
@@ -28,7 +28,7 @@ bool get_mode_selector (void);
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
 
-extern parameter_namespace_t parameter_root;///////////////////////////////////
+extern parameter_namespace_t parameter_root;
 
 #ifdef __cplusplus
 }

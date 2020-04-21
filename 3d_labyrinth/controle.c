@@ -26,6 +26,7 @@
 #include <controle.h>
 #include <audio_processing.h>
 
+// pointers for thread creation and thread end
 static thread_t *controle_imu;
 static thread_t *controle_son;
 static thread_t *prox_analyse;
@@ -96,7 +97,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-    	// calculate the total changement of ambient light
+    	// calculate the total change of ambient light
     	for(uint8_t k = 0 ; k < PROXIMITY_NB_CHANNELS; k++)
     	{
     		sum =+	init_ambient[k]-prox_values.ambient[k];
@@ -116,7 +117,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
     	sum = 0;
 
-    	// blocage if sensors in the front detect an obstacle but we want to move forward (mode imu)
+    	// blocking if sensors in the front detect an obstacle but we want to move forward (mode imu)
     	if (mode == MODE_IMU)
     	{
 			if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB)
@@ -132,7 +133,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 			}
     	}
 
-		// blocage if sensors in the front 45° detect an obstacle but we want to move forward (mode sound)
+		// blocking if sensors in the front 45° detect an obstacle but we want to move forward (mode sound)
     	if (mode == MODE_SON)
     	{
 			if (abs(prox_values.delta[0])>SEUIL_PROXI_FB || abs(prox_values.delta[7])>SEUIL_PROXI_FB || abs(prox_values.delta[6])>SEUIL_PROXI_LATERAL || abs(prox_values.delta[1])>SEUIL_PROXI_LATERAL)
@@ -157,7 +158,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
 
-		// blocage if sensors at the back detect an obstacle but we want to step back ( mode imu)
+		// blocking if sensors at the back detect an obstacle but we want to step back ( mode imu)
 		if (mode == MODE_IMU)
 		{
 			if (abs(prox_values.delta[3])>SEUIL_PROXI_FB  || abs(prox_values.delta[4])>SEUIL_PROXI_FB)
@@ -209,7 +210,7 @@ void show_gravity(imu_msg_t *imu_values)
     //create a pointer to the array for shorter name
     float *accel = imu_values->acceleration;
 
-    // Filtre par moyenne pour éviter les accoups lors des changements de vitesse
+    // average filtering to avoid speed hitch
     static float tab_average[NB_VALEUR_FILTRE] = {0};
     static uint8_t boucle = 0;
     float acceleration_average = 0;
@@ -236,9 +237,6 @@ void show_gravity(imu_msg_t *imu_values)
     }
     acceleration_average = acceleration_average / NB_VALEUR_FILTRE;
 
-    /*
-    *   example 1 with trigonometry.
-    */
 
     /*
     * Quadrant:
@@ -428,7 +426,8 @@ static THD_FUNCTION(controle_imu_thd, arg)
  */
 
 
-int16_t pi_regulator(float error){
+int16_t pi_regulator(float error)
+{
 
 	float speed = 0;
 
@@ -436,16 +435,21 @@ int16_t pi_regulator(float error){
 
 
 	//disables the PI regulator if the error is to small
-	if(fabs(error) < ERROR_THRESHOLD){
+	if(fabs(error) < ERROR_THRESHOLD)
+	{
 		return 0;
 	}
 
 	sum_error += error;
 
 	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
-	if(sum_error > MAX_SUM_ERROR){
+	if(sum_error > MAX_SUM_ERROR)
+	{
 		sum_error = MAX_SUM_ERROR;
-	}else if(sum_error < -MAX_SUM_ERROR){
+	}
+
+	else if(sum_error < -MAX_SUM_ERROR)
+	{
 		sum_error = -MAX_SUM_ERROR;
 	}
 
@@ -461,7 +465,8 @@ int16_t pi_regulator(float error){
  */
 static THD_WORKING_AREA(controle_son_thd_wa, 256);
 
-static THD_FUNCTION(controle_son_thd, arg) {
+static THD_FUNCTION(controle_son_thd, arg)
+{
 
     chRegSetThreadName(__FUNCTION__);
     (void)arg;
@@ -482,21 +487,21 @@ static THD_FUNCTION(controle_son_thd, arg) {
 
 
        if (detection_fin) // if mission is finished, motors stops
-            {
-            	left_motor_set_speed(NO_SPEED);
-            	right_motor_set_speed(NO_SPEED);
+       {
+            left_motor_set_speed(NO_SPEED);
+            right_motor_set_speed(NO_SPEED);
 
-            	if (!already_played_fin) // ending music can be only played once
-            	{
-            		playMelody(MARIO_FLAG, ML_FORCE_CHANGE, NULL);
-            		already_played_fin = TRUE;
-            	}
+            if (!already_played_fin) // ending music can be only played once
+            {
+            	playMelody(MARIO_FLAG, ML_FORCE_CHANGE, NULL);
+            	already_played_fin = TRUE;
             }
+       }
 
 
        else if(!detection_fin) //if mission is in process
        {
-			if (controle_front) //if obstable is present in front of robot, only rotation
+			if (controle_front) //if obstacle is present in front of robot, only rotation
 			{
 				right_motor_set_speed(speed);
 				left_motor_set_speed(-speed);
