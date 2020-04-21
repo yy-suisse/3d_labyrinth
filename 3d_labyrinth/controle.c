@@ -67,7 +67,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     calibrate_ir();
 
 
-    while(1) {
+    while(chThdShouldTerminateX() == false) {
     	time = chVTGetSystemTime();
 
     	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
@@ -231,7 +231,7 @@ void show_gravity(imu_msg_t *imu_values)
     {
     	acceleration_average += tab_average[i];
     }
-    acceleration_average = acceleration_average / NB_VALEUR_FILTRE ; //// SHIFT PLUTOT ///////////////////////////////
+    acceleration_average = acceleration_average / NB_VALEUR_FILTRE;
 
     /*
     *   example 1 with trigonometry.
@@ -319,12 +319,12 @@ void show_gravity(imu_msg_t *imu_values)
 						already_played = FALSE;
 					}
 
-					else if (controle_front) //impossible to move forward, stop
+					else if (controle_front) // if impossible to move forward, stop
 					{
 						left_motor_set_speed(NO_SPEED);
 						right_motor_set_speed(NO_SPEED);
 
-						if (!already_played) // stop music can pnly be played once
+						if (!already_played) // music can only be played once
 						{
 							playMelody(MARIO_DEATH, ML_FORCE_CHANGE, NULL);
 							already_played = TRUE;
@@ -398,7 +398,7 @@ static THD_FUNCTION(controle_imu_thd, arg)
 
     calibrate_acc();
 
-    while(1)
+    while(chThdShouldTerminateX() == false)
     {
     	//wait for new measures to be published
     	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
@@ -469,7 +469,7 @@ static THD_FUNCTION(controle_son_thd, arg) {
 
     static bool already_played_fin = FALSE;
 
-    while(1){
+    while(chThdShouldTerminateX() == false){
         time = chVTGetSystemTime();
 
         //computes the speed to give to the motors

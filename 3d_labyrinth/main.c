@@ -96,23 +96,6 @@ int main(void)
     /* Infinite loop. */
     while (1)
     {
-    /*	if (mode_selector == MODE_IMU && get_selector()%2 == MODE_SON)
-    	{
-    		imu_stop();
-    		controle_imu_stop();
-    		mic_start(&processAudioData);
-    		controle_son_start();
-    	}
-
-    	if (mode_selector == MODE_SON && get_selector()%2 == MODE_IMU)
-    	{
-    		mic_stop
-    		controle_son_stop();
-    		imu_start();
-    		controle_imu_start();
-    	}*/
-
-/*
     	if (get_detection_fin() && !stop)
     	{
     		if (mode_selector == MODE_IMU)
@@ -130,7 +113,7 @@ int main(void)
 
     		stop = TRUE;
     	}
-*/
+
         chThdSleepMilliseconds(1000);
     }
 }
