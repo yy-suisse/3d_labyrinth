@@ -26,6 +26,8 @@
 #include <controle.h>
 #include <audio_processing.h>
 
+#include <chprintf.h>//////////////////////////////////
+
 // pointers for thread creation and thread end
 static thread_t *controle_imu;
 static thread_t *controle_son;
@@ -104,8 +106,9 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     	// calculate the total change of ambient light
     	for(i = 0 ; i < PROXIMITY_NB_CHANNELS; i++)
     	{
-    		sum =+	init_ambient[i]-prox_values.ambient[i];
+    		sum +=	init_ambient[i]-prox_values.ambient[i];
     	}
+    	chprintf((BaseSequentialStream *)&SDU1, "ambient_init = %d, ambient_actuelle = %d, difference = %d, somme = %d \r\n", init_ambient[7], prox_values.ambient[7], init_ambient[7]-prox_values.ambient[7], sum);////////////////////////////////////////////////////
 
     	i=0;
 
@@ -325,6 +328,7 @@ void show_gravity(imu_msg_t *imu_values)
 
 					if(!controle_front) //if possible to move forward
 					{
+						//chprintf((BaseSequentialStream *)&SDU1, "acceleration=%f, vitesse=%f, vitesse_filtre=%f \r\n", fabs(accel[Y_AXIS]) ,VITESSE_BASE*fabs(accel[Y_AXIS]) ,VITESSE_BASE*acceleration_average);////////////////////////////////////////////////////
 						left_motor_set_speed(VITESSE_BASE*acceleration_average);
 						right_motor_set_speed(VITESSE_BASE*acceleration_average);
 						already_played = FALSE;
@@ -359,8 +363,6 @@ void show_gravity(imu_msg_t *imu_values)
 				left_motor_set_speed(NO_SPEED);
 				right_motor_set_speed(NO_SPEED);
 			}
-
-
 
 
 			//we invert the values because a led is turned on if the signal is low
