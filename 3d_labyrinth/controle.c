@@ -53,7 +53,7 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     chRegSetThreadName(__FUNCTION__);
 
     systime_t time;
-    static int init_ambient[PROXIMITY_NB_CHANNELS];
+    static int16_t init_ambient[PROXIMITY_NB_CHANNELS];
     static bool init_in_process = TRUE;
 
     static int16_t sum = 0;
@@ -76,13 +76,17 @@ static THD_FUNCTION(prox_analyse_thd, arg)
     	//wait for new measures to be published
     	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 
+    	uint8_t i =0;
+
     	// initialize the ambient light once at the beginning, it helps to determine the end of the game
     	if(init_in_process)
     	{
-    			for (uint8_t j = 0; j < PROXIMITY_NB_CHANNELS; j++)
+    			for (i = 0; i < PROXIMITY_NB_CHANNELS; i++)
     			{
-    				init_ambient[j]=prox_values.ambient[j];
+    				init_ambient[i]=prox_values.ambient[i];
     			}
+
+    			i=0;
 
     			init_in_process = FALSE;
     	}
@@ -90,27 +94,31 @@ static THD_FUNCTION(prox_analyse_thd, arg)
 
 
     	// clear all the  RGB LED
-    	for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
+    	for(i = 0 ; i < NOMBRE_LED_RGB ; i++ )
     	{
     		set_rgb_led(i, 0, 0, 0);
     	}
 
-
+    	i=0;
 
     	// calculate the total change of ambient light
-    	for(uint8_t k = 0 ; k < PROXIMITY_NB_CHANNELS; k++)
+    	for(i = 0 ; i < PROXIMITY_NB_CHANNELS; i++)
     	{
-    		sum =+	init_ambient[k]-prox_values.ambient[k];
+    		sum =+	init_ambient[i]-prox_values.ambient[i];
     	}
+
+    	i=0;
 
 
     	//if actual ambient light is intensified, then the robot arrives at the end of mission
     	if (sum >=SEUIL_DETECTION_FIN)
     	{
-    		for(uint8_t i = 0 ; i < NOMBRE_LED_RGB ; i++ )
+    		for(i = 0 ; i < NOMBRE_LED_RGB ; i++ )
     		{
     			set_rgb_led(i, 10,5 , 2);
     		}
+
+    		i=0;
 
     		detection_fin = TRUE;
     	}
@@ -210,7 +218,9 @@ void show_gravity(imu_msg_t *imu_values)
     //create a pointer to the array for shorter name
     float *accel = imu_values->acceleration;
 
-    // average filtering to avoid speed hitch
+    // average filtering to avoid speed hitch,
+    // even if motor set speed take int, we need to use float for the acceleration
+    // because we can't allow to have a 0 acceleration or a discontinuous speed
     static float tab_average[NB_VALEUR_FILTRE] = {0};
     static uint8_t boucle = 0;
     float acceleration_average = 0;
@@ -510,8 +520,8 @@ static THD_FUNCTION(controle_son_thd, arg)
 
 			else   // if no obstacle is present  in  front of robot, robot can move forward and rotate forward to the sound source
 			{
-				right_motor_set_speed(MOTOR_SPEED_LIMIT/4 + speed);
-				left_motor_set_speed(MOTOR_SPEED_LIMIT/4 -speed);
+				right_motor_set_speed(VITESSE_MODE_SON + speed);
+				left_motor_set_speed(VITESSE_MODE_SON -speed);
 			}
        }
 

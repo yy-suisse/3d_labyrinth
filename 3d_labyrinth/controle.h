@@ -18,6 +18,7 @@
 
 // typical values of speed used in the program
 #define VITESSE_BASE 				150
+#define VITESSE_MODE_SON			275
 #define NO_SPEED					0
 
 // values for the PI regulator
