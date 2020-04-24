@@ -58,10 +58,10 @@ int main(void)
 	clear_leds();
 	set_body_led(0);
 	set_front_led(0);
-	usb_start();// led orange que pour imu -> voir assistant
+	usb_start();
 	motors_init();
 	proximity_start();
-	dac_start(); // kernel panic si on enleve
+	dac_start();
 	spi_comm_start();
 	playMelodyStart();
 

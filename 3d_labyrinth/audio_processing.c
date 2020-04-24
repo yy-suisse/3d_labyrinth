@@ -9,8 +9,6 @@
 #include <arm_math.h>
 #include <arm_const_structs.h>
 
-#include<chprintf.h>//////////////////////////////////////////////////////////////////////////////
-
 
 //2 times FFT_SIZE because these arrays contain complex numbers (real + imaginary)
 static float micLeft_cmplx_input[2 * FFT_SIZE];
@@ -75,7 +73,6 @@ void sound_remote(float* data1, float* data2)
 	}
 
 
-
 	/* since 2 microphones receive the same sound, if the frequencies of peak value in 2 data arrays are the same,
 	 * then the source is correct to calculate phase difference
 	 */
@@ -94,7 +91,6 @@ void sound_remote(float* data1, float* data2)
 		// update phase difference value for the further measurement
 		if (phase_dif > -FILTRE_VALEUR_ABERRANTE && phase_dif < FILTRE_VALEUR_ABERRANTE)
 		{
-			//chprintf((BaseSequentialStream *)&SDU1, "phase_dif = %f \r\n", phase_dif);////////////////////////////////////////////////////
 			phase_dif_old = phase_dif;
 		}
 
